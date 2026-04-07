@@ -155,6 +155,7 @@
     <div class="mobile-avatar" id="mobileAvatar"></div>
     <div id="mobileName" style="text-align:center; font-weight:bold; margin-top:5px;"></div>
     <div id="mobileVerifiedBadge" style="text-align:center; margin-top:5px;"></div>
+    <div id="mobileFollowBtnContainer" style="margin-top:8px; text-align:center;"></div>
     <div class="mobile-tabs">
         <button class="mobile-tab-btn" data-tab="feed">Лента</button>
         <button class="mobile-tab-btn" data-tab="about">О сайте</button>
@@ -175,6 +176,7 @@
             <div id="sidebarName" style="font-weight:bold; margin-top:5px;"></div>
             <div id="sidebarVerifiedBadge" style="margin-top:3px;"></div>
             <div id="sidebarStatus" style="font-size:10px; color:#666; margin-top:3px;"></div>
+            <div id="sidebarFollowBtnContainer" style="margin-top:8px;"></div>
             <button id="sidebarSubsBtn" class="account-btn" style="display:none;">ПОДПИСКИ</button>
             <button id="sidebarFollowersBtn" class="followers-btn" style="display:none;">ПОДПИСЧИКИ</button>
             <button id="sidebarAccountBtn" class="account-btn" style="display:none;">АККАУНТ</button>
@@ -238,7 +240,6 @@
     let userPostTimestamps = {};
     let isOnline = navigator.onLine;
     
-    // Переменные для предпросмотра файлов
     let selectedPhoto = null;
     let selectedAudio = null;
     
@@ -402,7 +403,6 @@
     }
     
     async function init() {
-        // Устанавливаем хэш # если его нет
         if (!window.location.hash || window.location.hash === '') {
             window.location.hash = '';
         }
@@ -428,7 +428,6 @@
         const savedSession = localStorage.getItem('rb_session');
         if (savedSession && users.find(u => u.id === savedSession && !u.banned)) currentUserId = savedSession;
         
-        // Обработка хэш-маршрутов
         const hashRoute = getHashRoute();
         
         if (hashRoute === 'about') {
@@ -504,7 +503,6 @@
         updateLogo();
         window.addEventListener('resize', updateLogo);
         
-        // Настройка предпросмотра файлов
         document.getElementById('postImage').addEventListener('change', (e) => {
             if (e.target.files[0]) {
                 selectedPhoto = e.target.files[0];
@@ -1085,20 +1083,13 @@
         let subsBtn = document.getElementById('sidebarSubsBtn'); 
         let followersBtn = document.getElementById('sidebarFollowersBtn');
         
-        const followContainer = document.getElementById('sidebarFollowBtnContainer');
-        if(!document.getElementById('sidebarFollowBtn')) {
-            const container = document.createElement('div');
-            container.id = 'sidebarFollowBtnContainer';
-            container.style.marginTop = '8px';
-            document.getElementById('sidebarStatus').after(container);
-        }
-        const container = document.getElementById('sidebarFollowBtnContainer');
+        let followContainer = document.getElementById('sidebarFollowBtnContainer');
         if(viewingUserId && viewingUserId !== currentUserId && u) {
             const isSubscribed = isFollowing(currentUserId, viewingUserId);
-            container.innerHTML = `<button class="follow-btn-on-page ${isSubscribed ? 'following' : ''}" onclick="toggleFollow('${currentUserId}', '${viewingUserId}')">${isSubscribed ? 'Отписаться' : 'Подписаться'}</button>`;
-            container.style.display = 'block';
+            followContainer.innerHTML = `<button class="follow-btn-on-page ${isSubscribed ? 'following' : ''}" onclick="toggleFollow('${currentUserId}', '${viewingUserId}')">${isSubscribed ? 'Отписаться' : 'Подписаться'}</button>`;
+            followContainer.style.display = 'block';
         } else {
-            container.style.display = 'none';
+            followContainer.style.display = 'none';
         }
         
         if(displayUser) { 
@@ -1133,6 +1124,15 @@
         
         let subsBtn = document.getElementById('mobileSubsBtn');
         let followersBtn = document.getElementById('mobileFollowersBtn');
+        
+        let mobileFollowContainer = document.getElementById('mobileFollowBtnContainer');
+        if(viewingUserId && viewingUserId !== currentUserId && u) {
+            const isSubscribed = isFollowing(currentUserId, viewingUserId);
+            mobileFollowContainer.innerHTML = `<button class="follow-btn-on-page ${isSubscribed ? 'following' : ''}" style="width:100%;" onclick="toggleFollow('${currentUserId}', '${viewingUserId}')">${isSubscribed ? 'Отписаться' : 'Подписаться'}</button>`;
+            mobileFollowContainer.style.display = 'block';
+        } else {
+            mobileFollowContainer.style.display = 'none';
+        }
         
         if(displayUser) {
             subsBtn.style.display = 'block';
