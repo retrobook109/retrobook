@@ -657,11 +657,23 @@
         return true;
     }
     
+    // ИСПРАВЛЕННАЯ ФУНКЦИЯ createPost - теперь правильно обрабатывает одновременную загрузку фото и аудио
     async function createPost(text, photo, audio) {
-        let u = getCurrentUser(); if(!u || u.banned) { showMessage("Войдите в аккаунт"); return false; }
-        if(text.length > 1500) { showMessage("Текст не может превышать 1500 символов"); return false; }
-        if(!text.trim() && !photo && !audio) { showMessage("Напишите текст или добавьте файл"); return false; }
+        let u = getCurrentUser(); 
+        if(!u || u.banned) { 
+            showMessage("Войдите в аккаунт"); 
+            return false; 
+        }
+        if(text.length > 1500) { 
+            showMessage("Текст не может превышать 1500 символов"); 
+            return false; 
+        }
+        if(!text.trim() && !photo && !audio) { 
+            showMessage("Напишите текст или добавьте файл"); 
+            return false; 
+        }
         if (!checkSpam(u.id)) return false;
+        
         let newPost = { 
             id: Date.now().toString(), 
             authorId: u.id, 
@@ -674,12 +686,89 @@
             likes: [], 
             comments: [] 
         };
+        
         await savePost(newPost);
         await loadPosts();
         parseMentions(text, newPost.id);
         render();
         await addAdminLog("create_post", u.name, `Создан пост: ${text.substring(0, 100)}`);
         return true;
+    }
+    
+    // ИСПРАВЛЕННАЯ ФУНКЦИЯ публикации - теперь ждёт загрузки обоих файлов
+    async function publishPost() {
+        let txt = document.getElementById('postText').value;
+        if(txt.length > 1500) { 
+            showMessage("Текст не может превышать 1500 символов"); 
+            return; 
+        }
+        
+        // Проверяем, есть ли файлы для загрузки
+        const hasPhoto = selectedPhoto !== null;
+        const hasAudio = selectedAudio !== null;
+        
+        if (!txt.trim() && !hasPhoto && !hasAudio) {
+            showMessage("Напишите текст или добавьте файл");
+            return;
+        }
+        
+        // Показываем индикатор загрузки (отключаем кнопку)
+        const publishBtn = document.getElementById('publishBtn');
+        const originalBtnText = publishBtn.innerText;
+        publishBtn.disabled = true;
+        publishBtn.innerText = "Публикация...";
+        
+        let img64 = "";
+        let aud64 = "";
+        let errors = [];
+        
+        // Функция для загрузки файла
+        const loadFile = (file, maxSize, type) => {
+            return new Promise((resolve, reject) => {
+                if (!file) {
+                    resolve("");
+                    return;
+                }
+                if (file.size > maxSize) {
+                    reject(`Файл ${type} больше ${maxSize/1024/1024} МБ`);
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = () => reject(`Ошибка чтения файла ${type}`);
+                reader.readAsDataURL(file);
+            });
+        };
+        
+        try {
+            // Загружаем фото и аудио параллельно
+            const [photoData, audioData] = await Promise.all([
+                hasPhoto ? loadFile(selectedPhoto, 5 * 1024 * 1024, "фото") : Promise.resolve(""),
+                hasAudio ? loadFile(selectedAudio, 10 * 1024 * 1024, "аудио") : Promise.resolve("")
+            ]);
+            
+            img64 = photoData;
+            aud64 = audioData;
+            
+            // Создаём пост с загруженными файлами
+            await createPost(txt, img64, aud64);
+            
+            // Очищаем форму
+            document.getElementById('postText').value = '';
+            selectedPhoto = null;
+            selectedAudio = null;
+            document.getElementById('postImage').value = '';
+            document.getElementById('postAudio').value = '';
+            updateFilePreviews();
+            
+        } catch (error) {
+            console.error("Ошибка публикации:", error);
+            showMessage(typeof error === 'string' ? error : "Ошибка при загрузке файлов");
+        } finally {
+            // Восстанавливаем кнопку
+            publishBtn.disabled = false;
+            publishBtn.innerText = originalBtnText;
+        }
     }
     
     window.deletePost = async function(id) { 
@@ -964,22 +1053,16 @@
             await addAdminLog("update_account", u.name, `Обновлены данные аккаунта`);
         };
         
-        // УДАЛЕНИЕ АККАУНТА — ИСПРАВЛЕНО
         document.getElementById('deleteAccountBtn').onclick = async () => {
             if(confirm("Вы уверены? Все ваши посты будут удалены безвозвратно!")) {
                 try {
-                    // Удаляем все посты пользователя
                     for(let p of posts.filter(post => post.authorId === u.id)) {
                         await supabase.from('posts').delete().eq('id', p.id);
                     }
-                    // Удаляем подписки пользователя
                     await supabase.from('subscriptions').delete().eq('userId', u.id);
-                    // Удаляем уведомления пользователя
                     await supabase.from('notifications').delete().eq('userId', u.id);
-                    // Удаляем пользователя
                     await supabase.from('users').delete().eq('id', u.id);
                     
-                    // Если удалили сами себя — выходим
                     if(currentUserId === u.id) {
                         currentUserId = null;
                         viewingUserId = null;
@@ -1236,37 +1319,8 @@
         return text.substring(0, start) + replacement + text.substring(end);
     }
     
-    document.getElementById('publishBtn')?.addEventListener('click', async () => {
-        let txt = document.getElementById('postText').value;
-        if(txt.length > 1500) { showMessage("Текст не может превышать 1500 символов"); return; }
-        
-        let img64 = "", aud64 = "";
-        let pend = 0;
-        let pub = () => { if(pend === 0) createPost(txt, img64, aud64); };
-        
-        if (selectedPhoto) {
-            if(selectedPhoto.size > 5*1024*1024){ showMessage("Файл больше 5 МБ"); return; }
-            pend++;
-            let r = new FileReader();
-            r.onload = e => { img64 = e.target.result; pend--; pub(); };
-            r.readAsDataURL(selectedPhoto);
-        }
-        if (selectedAudio) {
-            if(selectedAudio.size > 10*1024*1024){ showMessage("Аудио больше 10 МБ"); return; }
-            pend++;
-            let r = new FileReader();
-            r.onload = e => { aud64 = e.target.result; pend--; pub(); };
-            r.readAsDataURL(selectedAudio);
-        }
-        if(pend === 0) createPost(txt, "", "");
-        
-        document.getElementById('postText').value = '';
-        selectedPhoto = null;
-        selectedAudio = null;
-        document.getElementById('postImage').value = '';
-        document.getElementById('postAudio').value = '';
-        updateFilePreviews();
-    });
+    // ПОДКЛЮЧАЕМ ИСПРАВЛЕННУЮ ФУНКЦИЮ К КНОПКЕ
+    document.getElementById('publishBtn')?.addEventListener('click', publishPost);
     
     document.querySelectorAll('.format-btn').forEach(btn => {
         btn.addEventListener('click', () => {
