@@ -39,6 +39,8 @@
         .format-btn[data-format="strike"] { text-decoration: line-through; }
         .file-label { display: inline-block; background: #e9eaed; border: 1px solid #bdc7d8; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-right: 8px; margin-bottom: 5px; }
         .file-input { display: none; }
+        .file-preview { display: inline-block; margin-left: 8px; font-size: 11px; color: #666; }
+        .remove-file-btn { background: #dd3b3b; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; margin-left: 5px; }
         .post-btn { background: #4267b2; color: white; border: none; padding: 6px 12px; border-radius: 3px; cursor: pointer; font-weight: bold; margin-top: 5px; }
         .feed-tabs { display: flex; gap: 5px; margin-bottom: 10px; }
         .feed-tab-btn { background: #e9eaed; border: 1px solid #bdc7d8; padding: 4px 10px; border-radius: 3px; cursor: pointer; font-size: 11px; }
@@ -188,8 +190,14 @@
                 </div>
                 <textarea id="postText" class="post-input" rows="2" placeholder="Что нового? Напишите @username для отметки (макс. 1500 символов)"></textarea>
                 <div class="char-counter" id="charCounter">0 / 1500</div>
-                <label class="file-label">Фото (до 5 МБ) <input type="file" id="postImage" class="file-input" accept="image/*"></label>
-                <label class="file-label">Музыка MP3 (до 10 МБ) <input type="file" id="postAudio" class="file-input" accept="audio/mpeg"></label>
+                <div>
+                    <label class="file-label">Фото (до 5 МБ) <input type="file" id="postImage" class="file-input" accept="image/*"></label>
+                    <span id="photoPreview" class="file-preview"></span>
+                </div>
+                <div>
+                    <label class="file-label">Музыка MP3 (до 10 МБ) <input type="file" id="postAudio" class="file-input" accept="audio/mpeg"></label>
+                    <span id="audioPreview" class="file-preview"></span>
+                </div>
                 <button id="publishBtn" class="post-btn">Опубликовать</button>
             </div>
             <div class="feed-tabs">
@@ -230,6 +238,10 @@
     let userPostTimestamps = {};
     let isOnline = navigator.onLine;
     
+    // Переменные для предпросмотра файлов
+    let selectedPhoto = null;
+    let selectedAudio = null;
+    
     function showMessage(msg) { 
         let t = document.createElement('div'); t.className = 'toast'; t.innerText = msg; 
         document.body.appendChild(t); setTimeout(()=>t.remove(),3000); 
@@ -252,15 +264,32 @@
         return Math.floor(diff/86400) + " дней назад";
     }
     
-    // Функции для работы с хэш-маршрутами
-    function updateHash(login) {
-        window.location.hash = `/users/${login}`;
+    function updateFilePreviews() {
+        const photoPreview = document.getElementById('photoPreview');
+        const audioPreview = document.getElementById('audioPreview');
+        if (selectedPhoto) {
+            photoPreview.innerHTML = `Файл выбран <button class="remove-file-btn" onclick="clearPhoto()">Удалить фото</button>`;
+        } else {
+            photoPreview.innerHTML = '';
+        }
+        if (selectedAudio) {
+            audioPreview.innerHTML = `Файл выбран <button class="remove-file-btn" onclick="clearAudio()">Удалить музыку</button>`;
+        } else {
+            audioPreview.innerHTML = '';
+        }
     }
     
-    function getHashRoute() {
-        const hash = window.location.hash.substring(1); // убираем #
-        return hash;
-    }
+    window.clearPhoto = function() {
+        selectedPhoto = null;
+        document.getElementById('postImage').value = '';
+        updateFilePreviews();
+    };
+    
+    window.clearAudio = function() {
+        selectedAudio = null;
+        document.getElementById('postAudio').value = '';
+        updateFilePreviews();
+    };
     
     async function addAdminLog(action, targetName, details) {
         const admin = getCurrentUser();
@@ -367,7 +396,17 @@
         await loadNotifications();
     }
     
+    function getHashRoute() {
+        const hash = window.location.hash.substring(1);
+        return hash;
+    }
+    
     async function init() {
+        // Устанавливаем хэш # если его нет
+        if (!window.location.hash || window.location.hash === '') {
+            window.location.hash = '';
+        }
+        
         if (!isOnline) {
             loadFromLocalStorage();
         } else {
@@ -426,7 +465,6 @@
             supabase.channel('public:admin_logs').on('postgres_changes', { event: '*', schema: 'public', table: 'admin_logs' }, () => loadAdminLogs()).subscribe();
         }
         
-        // Слушаем изменения хэша (для кнопок назад/вперёд)
         window.addEventListener('hashchange', () => {
             const newHash = getHashRoute();
             if (newHash === 'about') {
@@ -465,6 +503,20 @@
         }
         updateLogo();
         window.addEventListener('resize', updateLogo);
+        
+        // Настройка предпросмотра файлов
+        document.getElementById('postImage').addEventListener('change', (e) => {
+            if (e.target.files[0]) {
+                selectedPhoto = e.target.files[0];
+                updateFilePreviews();
+            }
+        });
+        document.getElementById('postAudio').addEventListener('change', (e) => {
+            if (e.target.files[0]) {
+                selectedAudio = e.target.files[0];
+                updateFilePreviews();
+            }
+        });
     }
     
     function getCurrentUser() { return users.find(u=>u.id===currentUserId); }
@@ -490,7 +542,7 @@
     window.viewUserProfileByLogin = (login) => { 
         let u = users.find(x=>x.login===login); 
         if(u) { 
-            updateHash(login);
+            window.location.hash = `/users/${login}`;
             viewingUserId = u.id; 
             render(); 
         } 
@@ -524,7 +576,7 @@
                 let div = document.createElement('div'); div.className = 'followers-item';
                 div.innerHTML = `<strong>${escapeHtml(f.name)}</strong> ${f.verified ? '<span class="verified-icon">✔</span>' : ''}`;
                 div.onclick = () => { 
-                    updateHash(f.login);
+                    window.location.hash = `/users/${f.login}`;
                     viewingUserId = f.id; 
                     modal.remove(); 
                     render(); 
@@ -550,7 +602,7 @@
                 let div = document.createElement('div'); div.className = 'subs-item';
                 div.innerHTML = `<strong>${escapeHtml(u.name)}</strong> ${u.verified ? '<span class="verified-icon">✔</span>' : ''}`;
                 div.onclick = () => { 
-                    updateHash(u.login);
+                    window.location.hash = `/users/${u.login}`;
                     viewingUserId = u.id; 
                     modal.remove(); 
                     render(); 
@@ -680,7 +732,7 @@
     window.viewUserProfile = function(id) { 
         let user = getUserById(id);
         if(user) {
-            updateHash(user.login);
+            window.location.hash = `/users/${user.login}`;
         }
         if(id === currentUserId) viewingUserId = null;
         else viewingUserId = id; 
@@ -1146,29 +1198,36 @@
         return text.substring(0, start) + replacement + text.substring(end);
     }
     
-    document.getElementById('publishBtn')?.addEventListener('click', () => {
-        let txt = document.getElementById('postText').value, img = document.getElementById('postImage').files[0], aud = document.getElementById('postAudio').files[0];
+    document.getElementById('publishBtn')?.addEventListener('click', async () => {
+        let txt = document.getElementById('postText').value;
         if(txt.length > 1500) { showMessage("Текст не может превышать 1500 символов"); return; }
-        let img64 = "", aud64 = "", pend = 0;
+        
+        let img64 = "", aud64 = "";
+        let pend = 0;
         let pub = () => { if(pend === 0) createPost(txt, img64, aud64); };
-        if(img){ 
-            if(img.size > 5*1024*1024){ showMessage("Файл больше 5 МБ"); return; } 
-            pend++; 
-            let r = new FileReader(); 
-            r.onload = e => { img64 = e.target.result; pend--; pub(); }; 
-            r.readAsDataURL(img); 
+        
+        if (selectedPhoto) {
+            if(selectedPhoto.size > 5*1024*1024){ showMessage("Файл больше 5 МБ"); return; }
+            pend++;
+            let r = new FileReader();
+            r.onload = e => { img64 = e.target.result; pend--; pub(); };
+            r.readAsDataURL(selectedPhoto);
         }
-        if(aud){ 
-            if(aud.size > 10*1024*1024){ showMessage("Аудио больше 10 МБ"); return; } 
-            pend++; 
-            let r = new FileReader(); 
-            r.onload = e => { aud64 = e.target.result; pend--; pub(); }; 
-            r.readAsDataURL(aud); 
+        if (selectedAudio) {
+            if(selectedAudio.size > 10*1024*1024){ showMessage("Аудио больше 10 МБ"); return; }
+            pend++;
+            let r = new FileReader();
+            r.onload = e => { aud64 = e.target.result; pend--; pub(); };
+            r.readAsDataURL(selectedAudio);
         }
         if(pend === 0) createPost(txt, "", "");
-        document.getElementById('postText').value = ''; 
-        document.getElementById('postImage').value = ''; 
+        
+        document.getElementById('postText').value = '';
+        selectedPhoto = null;
+        selectedAudio = null;
+        document.getElementById('postImage').value = '';
         document.getElementById('postAudio').value = '';
+        updateFilePreviews();
     });
     
     document.querySelectorAll('.format-btn').forEach(btn => {
