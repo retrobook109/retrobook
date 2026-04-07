@@ -964,19 +964,37 @@
             await addAdminLog("update_account", u.name, `Обновлены данные аккаунта`);
         };
         
+        // ИСПРАВЛЕНА ФУНКЦИЯ УДАЛЕНИЯ АККАУНТА
         document.getElementById('deleteAccountBtn').onclick = async () => {
             if(confirm("Вы уверены? Все ваши посты будут удалены безвозвратно!")) {
-                for(let p of posts.filter(p => p.authorId === u.id)) await deletePostFromDB(p.id);
+                // Удаляем все посты пользователя
+                for(let p of posts.filter(p => p.authorId === u.id)) {
+                    await deletePostFromDB(p.id);
+                }
+                // Удаляем пользователя из Supabase
                 await supabase.from('users').delete().eq('id', u.id);
-                if(currentUserId === u.id) { currentUserId = null; viewingUserId = null; localStorage.removeItem('rb_session'); }
+                // Удаляем подписки пользователя
+                await supabase.from('subscriptions').delete().eq('userId', u.id);
+                // Если это текущий пользователь — выходим из аккаунта
+                if(currentUserId === u.id) {
+                    currentUserId = null;
+                    viewingUserId = null;
+                    localStorage.removeItem('rb_session');
+                }
                 modal.remove();
                 await loadUsers();
                 await loadPosts();
+                await loadSubscriptions();
                 render();
                 showMessage("Аккаунт удалён");
-                await addAdminLog("delete_account", u.name, `Удалён аккаунт ${u.name}`);
+                // Если пользователь удалил сам себя — перенаправляем на главную
+                if(currentUserId === null) {
+                    window.location.hash = '';
+                    goToMain();
+                }
             }
         };
+        
         document.getElementById('closeAccountModal').onclick = () => modal.remove();
     }
     
@@ -1172,13 +1190,12 @@
             document.getElementById('adminHistory').innerHTML = ''; 
             return; 
         }
-        let non = users.filter(u => !u.isAdmin || u.id === ADMIN_ID);
+        let allUsers = users.filter(u => u.id !== ADMIN_ID);
         let us = ''; 
-        for(let u of non) {
+        for(let u of allUsers) {
             us += `<div class="admin-user-item"><b>${escapeHtml(u.name)}</b> (${escapeHtml(u.login)}) ${u.banned ? '[ЗАБЛОКИРОВАН]' : ''}<br>
             ${u.verified ? `<button class="unverify-btn" onclick="removeVerification('${u.id}')">Удалить галочку</button>` : `<button class="verify-btn" onclick="giveVerification('${u.id}')">Выдать галочку</button>`}
-            ${!u.isAdmin && isSuperAdmin() ? `<button class="make-admin-btn" onclick="makeAdmin('${u.id}')">Сделать админом</button>` : ''}
-            ${u.isAdmin && u.id !== ADMIN_ID && isSuperAdmin() ? `<button class="make-admin-btn" onclick="removeAdmin('${u.id}')">Убрать админа</button>` : ''}
+            ${!u.isAdmin ? `<button class="make-admin-btn" onclick="makeAdmin('${u.id}')">Сделать админом</button>` : `<button class="make-admin-btn" style="background:#8b9dc3;" onclick="removeAdmin('${u.id}')">Убрать админа</button>`}
             ${u.banned ? `<button class="unban-btn" onclick="unbanUser('${u.id}')">Разбанить</button>` : `<input id="reason_${u.id}" placeholder="Причина" style="width:100%;margin:5px 0;"><button class="ban-btn" onclick="banUser('${u.id}')">Заблокировать</button>`}
             </div>`;
         }
@@ -1192,7 +1209,7 @@
         document.getElementById('adminHistory').innerHTML = logsHtml;
         
         let sel = document.getElementById('userSelect'); 
-        if(sel) sel.innerHTML = '<option value="">Выберите</option>' + non.map(u => `<option value="${u.id}">${escapeHtml(u.name)} ${u.verified ? '(галочка есть)' : ''}</option>`).join('');
+        if(sel) sel.innerHTML = '<option value="">Выберите</option>' + allUsers.map(u => `<option value="${u.id}">${escapeHtml(u.name)} ${u.verified ? '(галочка есть)' : ''}</option>`).join('');
     }
     
     function formatText(text, format) {
