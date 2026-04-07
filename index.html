@@ -964,33 +964,41 @@
             await addAdminLog("update_account", u.name, `Обновлены данные аккаунта`);
         };
         
-        // ИСПРАВЛЕНА ФУНКЦИЯ УДАЛЕНИЯ АККАУНТА
+        // УДАЛЕНИЕ АККАУНТА — ИСПРАВЛЕНО
         document.getElementById('deleteAccountBtn').onclick = async () => {
             if(confirm("Вы уверены? Все ваши посты будут удалены безвозвратно!")) {
-                // Удаляем все посты пользователя
-                for(let p of posts.filter(p => p.authorId === u.id)) {
-                    await deletePostFromDB(p.id);
-                }
-                // Удаляем пользователя из Supabase
-                await supabase.from('users').delete().eq('id', u.id);
-                // Удаляем подписки пользователя
-                await supabase.from('subscriptions').delete().eq('userId', u.id);
-                // Если это текущий пользователь — выходим из аккаунта
-                if(currentUserId === u.id) {
-                    currentUserId = null;
-                    viewingUserId = null;
-                    localStorage.removeItem('rb_session');
-                }
-                modal.remove();
-                await loadUsers();
-                await loadPosts();
-                await loadSubscriptions();
-                render();
-                showMessage("Аккаунт удалён");
-                // Если пользователь удалил сам себя — перенаправляем на главную
-                if(currentUserId === null) {
-                    window.location.hash = '';
-                    goToMain();
+                try {
+                    // Удаляем все посты пользователя
+                    for(let p of posts.filter(post => post.authorId === u.id)) {
+                        await supabase.from('posts').delete().eq('id', p.id);
+                    }
+                    // Удаляем подписки пользователя
+                    await supabase.from('subscriptions').delete().eq('userId', u.id);
+                    // Удаляем уведомления пользователя
+                    await supabase.from('notifications').delete().eq('userId', u.id);
+                    // Удаляем пользователя
+                    await supabase.from('users').delete().eq('id', u.id);
+                    
+                    // Если удалили сами себя — выходим
+                    if(currentUserId === u.id) {
+                        currentUserId = null;
+                        viewingUserId = null;
+                        localStorage.removeItem('rb_session');
+                        window.location.hash = '';
+                    }
+                    modal.remove();
+                    await loadUsers();
+                    await loadPosts();
+                    await loadSubscriptions();
+                    await loadNotifications();
+                    render();
+                    showMessage("Аккаунт удалён");
+                    if(currentUserId === null) {
+                        goToMain();
+                    }
+                } catch(e) {
+                    console.error("Ошибка удаления:", e);
+                    showMessage("Ошибка при удалении аккаунта");
                 }
             }
         };
