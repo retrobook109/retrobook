@@ -111,7 +111,6 @@
         .account-btn, .followers-btn { background: #5b74a8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 11px; margin-top: 8px; width: 100%; }
         .followers-btn { background: #4267b2; margin-top: 5px; }
         .follow-btn-on-page { background: #4267b2; color: white; border: none; padding: 5px 12px; border-radius: 3px; cursor: pointer; font-size: 11px; margin-top: 5px; display: inline-block; width: auto; }
-        .follow-btn-on-page.following { background: #8b9dc3; }
         @media (max-width: 750px) { 
             .sidebar { display: none; } 
             .burger { display: flex; } 
@@ -615,13 +614,21 @@
         if(a===b) { showMessage("Нельзя подписаться на себя"); return; }
         if(!subscriptions[a]) subscriptions[a] = [];
         let i = subscriptions[a].indexOf(b);
-        if(i===-1) subscriptions[a].push(b);
-        else subscriptions[a].splice(i,1);
-        await saveSubscription(a, subscriptions[a]);
-        await loadSubscriptions();
-        render();
-        showMessage(i===-1 ? "Вы подписались" : "Вы отписались");
-        await addAdminLog(i===-1 ? "subscribe" : "unsubscribe", getUserById(b)?.name || b, `Пользователь ${getUserById(a)?.name} ${i===-1 ? "подписался на" : "отписался от"} ${getUserById(b)?.name}`);
+        if(i === -1) {
+            subscriptions[a].push(b);
+            await saveSubscription(a, subscriptions[a]);
+            await loadSubscriptions();
+            render();
+            showMessage("Вы подписались");
+            await addAdminLog("subscribe", getUserById(b)?.name || b, `Пользователь ${getUserById(a)?.name} подписался на ${getUserById(b)?.name}`);
+        } else {
+            subscriptions[a].splice(i, 1);
+            await saveSubscription(a, subscriptions[a]);
+            await loadSubscriptions();
+            render();
+            showMessage("Вы отписались");
+            await addAdminLog("unsubscribe", getUserById(b)?.name || b, `Пользователь ${getUserById(a)?.name} отписался от ${getUserById(b)?.name}`);
+        }
     }
     
     function checkSpam(userId) {
@@ -1086,7 +1093,10 @@
         let followContainer = document.getElementById('sidebarFollowBtnContainer');
         if(viewingUserId && viewingUserId !== currentUserId && u) {
             const isSubscribed = isFollowing(currentUserId, viewingUserId);
-            followContainer.innerHTML = `<button class="follow-btn-on-page ${isSubscribed ? 'following' : ''}" onclick="toggleFollow('${currentUserId}', '${viewingUserId}')">${isSubscribed ? 'Отписаться' : 'Подписаться'}</button>`;
+            const buttonStyle = isSubscribed 
+                ? 'background: #8b9dc3; color: white; border: none; padding: 5px 12px; border-radius: 3px; cursor: pointer; font-size: 11px; margin-top: 5px; display: inline-block; width: auto;' 
+                : 'background: #4267b2; color: white; border: none; padding: 5px 12px; border-radius: 3px; cursor: pointer; font-size: 11px; margin-top: 5px; display: inline-block; width: auto;';
+            followContainer.innerHTML = `<button class="follow-btn-on-page" style="${buttonStyle}" onclick="toggleFollow('${currentUserId}', '${viewingUserId}')">${isSubscribed ? 'Отписаться' : 'Подписаться'}</button>`;
             followContainer.style.display = 'block';
         } else {
             followContainer.style.display = 'none';
@@ -1128,7 +1138,10 @@
         let mobileFollowContainer = document.getElementById('mobileFollowBtnContainer');
         if(viewingUserId && viewingUserId !== currentUserId && u) {
             const isSubscribed = isFollowing(currentUserId, viewingUserId);
-            mobileFollowContainer.innerHTML = `<button class="follow-btn-on-page ${isSubscribed ? 'following' : ''}" style="width:100%;" onclick="toggleFollow('${currentUserId}', '${viewingUserId}')">${isSubscribed ? 'Отписаться' : 'Подписаться'}</button>`;
+            const buttonStyle = isSubscribed 
+                ? 'background: #8b9dc3; color: white; border: none; padding: 5px 12px; border-radius: 3px; cursor: pointer; font-size: 11px; margin-top: 5px; width: 100%;' 
+                : 'background: #4267b2; color: white; border: none; padding: 5px 12px; border-radius: 3px; cursor: pointer; font-size: 11px; margin-top: 5px; width: 100%;';
+            mobileFollowContainer.innerHTML = `<button class="follow-btn-on-page" style="${buttonStyle}" onclick="toggleFollow('${currentUserId}', '${viewingUserId}')">${isSubscribed ? 'Отписаться' : 'Подписаться'}</button>`;
             mobileFollowContainer.style.display = 'block';
         } else {
             mobileFollowContainer.style.display = 'none';
