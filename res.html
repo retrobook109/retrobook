@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>RetroBook</title>
+    <link rel="icon" href="logobook.png" type="image/png">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #e9eaed; font-family: 'lucida grande', tahoma, verdana, arial, sans-serif; font-size: 12px; color: #1d2129; }
+        .container { max-width: 980px; margin: 0 auto; padding: 0 10px; }
+        .header { background: #3b5998; border-bottom: 1px solid #133783; padding: 8px 0; position: fixed; top: 0; width: 100%; z-index: 100; }
+        .header-inner { max-width: 980px; margin: 0 auto; padding: 0 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .logo { font-size: 28px; font-weight: bold; color: white; cursor: pointer; text-shadow: 0 1px 0 #133783; display: flex; align-items: center; gap: 8px; }
+        .logo-img { height: 32px; width: auto; }
+        .right-group { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .top-links { display: flex; gap: 8px; background: #2d4373; padding: 4px 10px; border-radius: 4px; }
+        .top-links a { color: white; text-decoration: none; font-size: 10px; font-weight: bold; }
+        .nav-tabs { display: flex; gap: 4px; background: #2d4373; padding: 4px 8px; border-radius: 4px; }
+        .tab-btn { background: #5b74a8; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 10px; font-weight: bold; }
+        .tab-btn.active { background: #ffb347; color: #2c2c2c; }
+        .auth-area { display: flex; gap: 6px; background: #2d4373; padding: 4px 8px; border-radius: 4px; }
+        .auth-input { padding: 3px 6px; border-radius: 3px; border: none; font-size: 10px; width: 85px; }
+        .auth-btn { background: #5b74a8; color: white; border: none; padding: 3px 8px; border-radius: 3px; cursor: pointer; font-size: 10px; font-weight: bold; }
+        .user-info { display: flex; align-items: center; gap: 8px; background: #2d4373; padding: 4px 10px; border-radius: 20px; color: white; font-size: 11px; }
+        .main { display: flex; gap: 20px; margin-top: 10px; padding-top: 55px; }
+        .sidebar { width: 200px; background: white; border: 1px solid #bdc7d8; border-radius: 3px; padding: 12px; text-align: center; position: sticky; top: 75px; align-self: flex-start; }
+        .avatar { width: 80px; height: 80px; background: #dddfe2; border-radius: 50%; margin: 0 auto 8px; background-size: cover; background-position: center; cursor: pointer; border: 2px solid #ddd; }
+        .feed { flex: 1; }
+        .post-area { background: white; border: 1px solid #bdc7d8; border-radius: 3px; padding: 12px; margin-bottom: 15px; }
+        .post-input { width: 100%; padding: 8px; border: 1px solid #bdc7d8; border-radius: 3px; margin-bottom: 8px; font-size: 12px; font-family: monospace; white-space: pre-wrap; word-wrap: break-word; }
+        .char-counter { font-size: 10px; color: #666; text-align: right; margin-bottom: 5px; }
+        .format-toolbar { display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; }
+        .format-btn { background: #e9eaed; border: 1px solid #bdc7d8; padding: 4px 10px; border-radius: 3px; cursor: pointer; font-size: 12px; transition: all 0.1s ease; font-family: inherit; }
+        .format-btn:hover { background: #d0d1d5; }
+        .format-btn[data-format="bold"] { font-weight: bold; }
+        .format-btn[data-format="italic"] { font-style: italic; }
+        .format-btn[data-format="underline"] { text-decoration: underline; }
+        .format-btn[data-format="strike"] { text-decoration: line-through; }
+        .file-label { display: inline-block; background: #e9eaed; border: 1px solid #bdc7d8; padding: 4px 8px; border-radius: 3px; font-size: 11px; cursor: pointer; margin-right: 8px; margin-bottom: 5px; }
+        .file-input { display: none; }
+        .post-btn { background: #4267b2; color: white; border: none; padding: 6px 12px; border-radius: 3px; cursor: pointer; font-weight: bold; margin-top: 5px; }
+        .feed-tabs { display: flex; gap: 5px; margin-bottom: 10px; }
+        .feed-tab-btn { background: #e9eaed; border: 1px solid #bdc7d8; padding: 4px 10px; border-radius: 3px; cursor: pointer; font-size: 11px; }
+        .feed-tab-btn.active { background: #4267b2; color: white; }
+        .post { background: white; border: 1px solid #bdc7d8; border-radius: 3px; margin-bottom: 12px; padding: 12px; }
+        .post-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; cursor: pointer; }
+        .post-avatar { width: 40px; height: 40px; background: #dddfe2; border-radius: 50%; background-size: cover; background-position: center; }
+        .post-author { font-weight: bold; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+        .post-time { color: #616770; font-size: 10px; margin-left: 6px; }
+        .verified-icon { display: inline-block; background: #3b5998; color: white; font-size: 9px; font-weight: bold; border-radius: 10px; padding: 1px 5px; line-height: 1.4; }
+        .admin-badge { background: #ffb347; color: #2c2c2c; font-size: 9px; font-weight: bold; padding: 2px 5px; border-radius: 8px; margin-left: 5px; }
+        .post-content { margin: 8px 0; font-size: 13px; word-break: break-word; white-space: pre-wrap; }
+        .post-content a { color: #4267b2; text-decoration: none; }
+        .post-content a:hover { text-decoration: underline; }
+        .mention { background: #e9f0ff; color: #3b5998; padding: 0 2px; border-radius: 2px; cursor: pointer; }
+        .post-photo { max-width: 100%; max-height: 300px; border-radius: 3px; margin-top: 8px; border: 1px solid #ddd; }
+        .post-audio audio { width: 100%; margin-top: 8px; }
+        .post-stats { border-top: 1px solid #e9eaed; border-bottom: 1px solid #e9eaed; padding: 6px 0; margin: 8px 0; display: flex; gap: 15px; }
+        .like-btn, .delete-btn { background: none; border: none; color: #4267b2; font-weight: bold; cursor: pointer; font-size: 11px; }
+        .delete-btn { color: #dd3b3b; margin-left: auto; }
+        .comments-section { margin-top: 8px; }
+        .comment { background: #f6f7f9; border-radius: 3px; padding: 6px 8px; margin: 5px 0; display: flex; gap: 8px; align-items: flex-start; }
+        .comment-avatar { width: 28px; height: 28px; background: #dddfe2; border-radius: 50%; background-size: cover; background-position: center; cursor: pointer; }
+        .comment-content { flex: 1; }
+        .comment strong { color: #3b5998; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+        .comment-actions { margin-top: 4px; }
+        .comment-action { background: none; border: none; color: #4267b2; font-size: 10px; cursor: pointer; margin-right: 8px; }
+        .comment-action.delete { color: #dd3b3b; }
+        .add-comment { margin-top: 8px; display: flex; gap: 6px; }
+        .comment-input { flex: 1; border: 1px solid #bdc7d8; border-radius: 3px; padding: 5px; }
+        .comment-btn { background: #4267b2; color: white; border: none; padding: 4px 10px; border-radius: 3px; cursor: pointer; }
+        .admin-panel { position: fixed; right: -300px; top: 55px; width: 280px; background: white; border-left: 1px solid #ccc; padding: 15px; transition: 0.25s; z-index: 200; max-height: 85vh; overflow-y: auto; }
+        .admin-panel.open { right: 0; }
+        .close-admin { text-align: right; font-size: 18px; cursor: pointer; }
+        .admin-user-item, .admin-log-item { background: #f6f7f9; margin: 6px 0; padding: 8px; border-radius: 3px; }
+        .ban-btn, .unban-btn, .verify-btn, .make-admin-btn { border: none; color: white; padding: 3px 8px; border-radius: 3px; cursor: pointer; font-size: 10px; margin: 2px; }
+        .ban-btn { background: #dd3b3b; }
+        .unban-btn { background: #5cb85c; }
+        .verify-btn { background: #3b5998; }
+        .make-admin-btn { background: #ffb347; color: #2c2c2c; }
+        .toast { position: fixed; bottom: 20px; right: 20px; background: #333; color: white; padding: 10px 20px; border-radius: 5px; z-index: 300; font-size: 12px; cursor: pointer; }
+        .burger { display: none; flex-direction: column; gap: 5px; cursor: pointer; background: #2d4373; padding: 8px 12px; border-radius: 4px; }
+        .burger span { width: 25px; height: 3px; background: white; }
+        .mobile-sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: white; z-index: 1000; transition: 0.3s; padding: 20px; overflow-y: auto; border-right: 3px solid #3b5998; }
+        .mobile-sidebar.open { left: 0; }
+        .mobile-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; display: none; }
+        .mobile-overlay.open { display: block; }
+        .mobile-avatar { width: 80px; height: 80px; background: #dddfe2; border-radius: 50%; margin: 0 auto 10px; background-size: cover; background-position: center; cursor: pointer; }
+        .mobile-close { text-align: right; font-size: 24px; cursor: pointer; }
+        .mobile-tabs { display: flex; flex-direction: column; gap: 8px; margin: 15px 0; }
+        .mobile-tab-btn { background: #5b74a8; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 5px; font-size: 12px; text-align: center; }
+        .mobile-link-btn { background: #4267b2; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 5px; font-size: 12px; text-align: center; text-decoration: none; display: block; margin-top: 8px; }
+        .notifications-dropdown { position: absolute; top: 50px; right: 10px; width: 300px; background: white; border: 1px solid #ccc; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 150; max-height: 400px; overflow-y: auto; display: none; }
+        .notifications-dropdown.show { display: block; }
+        .notification-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .notification-item:hover { background: #f0f0f0; }
+        .notification-text { flex: 1; cursor: pointer; }
+        .notification-delete { background: none; border: none; color: #dd3b3b; cursor: pointer; font-size: 14px; padding: 0 5px; }
+        .notification-bell { background: none; border: none; cursor: pointer; margin-right: 10px; }
+        .notification-bell img { width: 22px; height: 22px; vertical-align: middle; }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: white; width: 350px; max-height: 80vh; overflow-y: auto; border-radius: 8px; padding: 20px; }
+        .modal-content h3 { margin-bottom: 15px; }
+        .modal-content input { width: 100%; padding: 8px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; }
+        .subs-item, .followers-item { padding: 8px; border-bottom: 1px solid #eee; cursor: pointer; }
+        .subs-item:hover, .followers-item:hover { background: #f0f0f0; }
+        .back-btn { background: #5b74a8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 11px; margin-bottom: 10px; display: inline-block; }
+        .account-btn, .followers-btn { background: #5b74a8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 11px; margin-top: 8px; width: 100%; }
+        .followers-btn { background: #4267b2; margin-top: 5px; }
+        .follow-btn-on-page { background: #4267b2; color: white; border: none; padding: 5px 12px; border-radius: 3px; cursor: pointer; font-size: 11px; margin-top: 5px; display: inline-block; width: auto; }
+        .follow-btn-on-page.following { background: #8b9dc3; }
+        @media (max-width: 750px) { 
+            .sidebar { display: none; } 
+            .burger { display: flex; } 
+            .top-links, .nav-tabs { display: none; } 
+            .main { padding-top: 65px; }
+            .logo { font-size: 22px; }
+            .right-group { gap: 5px; }
+            .auth-input { width: 70px; font-size: 9px; padding: 3px 5px; }
+            .auth-btn { padding: 3px 6px; font-size: 9px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="header-inner">
+        <div class="logo" onclick="goToMain()">
+            <img class="logo-img" id="logoImg" alt="RetroBook" src="mainbook.png" style="height:32px;">
+        </div>
+        <div class="burger" id="burgerBtn"><span></span><span></span><span></span></div>
+        <div class="right-group">
+            <div class="top-links">
+                <a href="https://retrotube.net/users/RetroBook" target="_blank">Мой RetroTube</a>
+                <a href="https://pressf.com/retrobook/donate" target="_blank">На поддержку сайта</a>
+            </div>
+            <div class="nav-tabs" id="navTabs">
+                <button class="tab-btn active" data-tab="feed">Лента</button>
+                <button class="tab-btn" data-tab="about">О сайте</button>
+                <button class="tab-btn" data-tab="rules">Правила</button>
+            </div>
+            <div id="authWidget"></div>
+            <button id="notificationsBtn" class="notification-bell" style="display:none;"><img src="ring.png" alt="уведомления" style="width:22px;height:22px;"></button>
+            <div id="notificationsDropdown" class="notifications-dropdown"></div>
+        </div>
+    </div>
+</div>
+
+<div class="mobile-overlay" id="mobileOverlay"></div>
+<div class="mobile-sidebar" id="mobileSidebar">
+    <div class="mobile-close" id="closeMobile">X</div>
+    <div class="mobile-avatar" id="mobileAvatar"></div>
+    <div id="mobileName" style="text-align:center; font-weight:bold; margin-top:5px;"></div>
+    <div id="mobileVerifiedBadge" style="text-align:center; margin-top:5px;"></div>
+    <div class="mobile-tabs">
+        <button class="mobile-tab-btn" data-tab="feed">Лента</button>
+        <button class="mobile-tab-btn" data-tab="about">О сайте</button>
+        <button class="mobile-tab-btn" data-tab="rules">Правила</button>
+        <a href="https://retrotube.net/users/RetroBook" target="_blank" class="mobile-link-btn">Мой RetroTube</a>
+        <a href="https://pressf.com/retrobook/donate" target="_blank" class="mobile-link-btn">На поддержку сайта</a>
+    </div>
+    <button id="mobileSubsBtn" class="account-btn" style="display:none;">ПОДПИСКИ</button>
+    <button id="mobileFollowersBtn" class="followers-btn" style="display:none;">ПОДПИСЧИКИ</button>
+    <button id="mobileAccountBtn" class="account-btn" style="display:none;">АККАУНТ</button>
+    <button id="mobileBackBtn" class="back-btn" style="width:100%; margin-top:10px; display:none;">НА ГЛАВНУЮ</button>
+</div>
+
+<div class="container">
+    <div class="main">
+        <div class="sidebar">
+            <div class="avatar" id="sidebarAvatar"></div>
+            <div id="sidebarName" style="font-weight:bold; margin-top:5px;"></div>
+            <div id="sidebarVerifiedBadge" style="margin-top:3px;"></div>
+            <div id="sidebarStatus" style="font-size:10px; color:#666; margin-top:3px;"></div>
+            <button id="sidebarSubsBtn" class="account-btn" style="display:none;">ПОДПИСКИ</button>
+            <button id="sidebarFollowersBtn" class="followers-btn" style="display:none;">ПОДПИСЧИКИ</button>
+            <button id="sidebarAccountBtn" class="account-btn" style="display:none;">АККАУНТ</button>
+            <button id="sidebarBackBtn" class="back-btn" style="width:100%; margin-top:8px; display:none;">НА ГЛАВНУЮ</button>
+        </div>
+        <div class="feed">
+            <div id="postArea" style="display:none;" class="post-area">
+                <div class="format-toolbar">
+                    <button type="button" class="format-btn" data-format="bold">B</button>
+                    <button type="button" class="format-btn" data-format="italic">I</button>
+                    <button type="button" class="format-btn" data-format="underline">U</button>
+                    <button type="button" class="format-btn" data-format="strike">S</button>
+                </div>
+                <textarea id="postText" class="post-input" rows="2" placeholder="Что нового? Напишите @username для отметки (макс. 1500 символов)"></textarea>
+                <div class="char-counter" id="charCounter">0 / 1500</div>
+                <label class="file-label">Фото (до 5 МБ) <input type="file" id="postImage" class="file-input" accept="image/*"></label>
+                <label class="file-label">Музыка MP3 (до 10 МБ) <input type="file" id="postAudio" class="file-input" accept="audio/mpeg"></label>
+                <button id="publishBtn" class="post-btn">Опубликовать</button>
+            </div>
+            <div class="feed-tabs">
+                <button class="feed-tab-btn active" data-feed="recent">Недавние</button>
+                <button class="feed-tab-btn" data-feed="random">Перемешать</button>
+            </div>
+            <div id="feedContainer"></div>
+            <div id="aboutContainer" style="display:none; background:white; padding:20px; border-radius:3px;"></div>
+            <div id="rulesContainer" style="display:none; background:white; padding:20px; border-radius:3px;"></div>
+        </div>
+    </div>
+</div>
+
+<div class="admin-panel" id="adminPanel">
+    <div class="close-admin" id="closeAdmin">X</div>
+    <h4>ПАНЕЛЬ УПРАВЛЕНИЯ</h4>
+    <div><select id="userSelect" style="width:100%; margin:8px 0;"></select>
+    <button id="giveBadge" class="verify-btn">Выдать галочку</button>
+    <button id="removeBadge" class="verify-btn" style="background:#8b9dc3;">Удалить галочку</button>
+    <button id="makeAdminBtn" class="make-admin-btn" id="makeAdminBtn">Сделать админом</button>
+    <button id="removeAdminBtn" class="make-admin-btn" style="background:#8b9dc3;">Убрать админа</button></div>
+    <div id="adminUsers"></div>
+    <div id="adminHistory" style="margin-top:15px;"></div>
+</div>
+
+<script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+    
+    const supabaseUrl = 'https://ztdlmnacdsjmqwlzxmjq.supabase.co';
+    const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0ZGxtbmFjZHNqbXF3bHp4bWpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NzQ5NTMsImV4cCI6MjA5MTA1MDk1M30.fXStKsXzlhcej7Hhh_C4nLYrV8cJq_yqtrvB1baEQTw';
+    
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    
+    let users = [], posts = [], notifications = [], adminLogs = [], currentUserId = null, viewingUserId = null, currentTab = 'feed', currentFeedMode = 'recent', subscriptions = {};
+    let aboutText = "Добро пожаловать в RetroBook! Социальная сеть в стиле 2011 года.";
+    let rulesText = "1. Уважайте других.\n2. Запрещён спам.\n3. Будьте вежливы.";
+    const ADMIN_ID = "admin", ADMIN_LOGIN = "RetroBook", ADMIN_PASS = "20148812Gl";
+    let userPostTimestamps = {};
+    let isOnline = navigator.onLine;
+    
+    function showMessage(msg) { 
+        let t = document.createElement('div'); t.className = 'toast'; t.innerText = msg; 
+        document.body.appendChild(t); setTimeout(()=>t.remove(),3000); 
+    }
+    
+    function escapeHtml(s) { if(!s) return ''; return s.replace(/[&<>]/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]); }
+    function linkify(text) { let urlRegex = /(https?:\/\/[^\s]+)/g; return text.replace(urlRegex, '<a href="$1" target="_blank">$1</a>'); }
+    function applyFormatting(text) {
+        text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        text = text.replace(/__(.*?)__/g, '<u>$1</u>');
+        text = text.replace(/~~(.*?)~~/g, '<s>$1</s>');
+        return text;
+    }
+    function formatTime(timestamp) {
+        let diff = Math.floor((Date.now() - timestamp) / 1000);
+        if (diff < 60) return "только что";
+        if (diff < 3600) return Math.floor(diff/60) + " минут назад";
+        if (diff < 86400) return Math.floor(diff/3600) + " часов назад";
+        return Math.floor(diff/86400) + " дней назад";
+    }
+    
+    async function addAdminLog(action, targetName, details) {
+        const admin = getCurrentUser();
+        if (!admin || !admin.isAdmin) return;
+        const logEntry = {
+            id: Date.now().toString(),
+            adminId: admin.id,
+            adminName: admin.name,
+            action: action,
+            targetName: targetName,
+            details: details,
+            timestamp: Date.now(),
+            date: new Date().toLocaleString()
+        };
+        adminLogs.unshift(logEntry);
+        if (adminLogs.length > 500) adminLogs.pop();
+        await supabase.from('admin_logs').insert(logEntry).catch(e => console.error("Log save error:", e));
+        saveToLocalStorage();
+    }
+    
+    async function loadAdminLogs() {
+        const { data, error } = await supabase.from('admin_logs').select('*').order('timestamp', { ascending: false });
+        if (!error && data) adminLogs = data;
+        else adminLogs = [];
+        localStorage.setItem('rb_admin_logs_backup', JSON.stringify(adminLogs));
+    }
+    
+    async function loadUsers() {
+        const { data, error } = await supabase.from('users').select('*');
+        if (error) { console.error(error); return; }
+        users = data || [];
+        localStorage.setItem('rb_users_backup', JSON.stringify(users));
+    }
+    
+    async function loadPosts() {
+        const { data, error } = await supabase.from('posts').select('*').order('timestamp', { ascending: false });
+        if (error) { console.error(error); return; }
+        posts = data || [];
+        localStorage.setItem('rb_posts_backup', JSON.stringify(posts));
+    }
+    
+    async function loadSubscriptions() {
+        const { data, error } = await supabase.from('subscriptions').select('*');
+        if (error) { console.error(error); return; }
+        subscriptions = {};
+        data.forEach(item => { subscriptions[item.userId] = item.following || []; });
+        localStorage.setItem('rb_subs_backup', JSON.stringify(subscriptions));
+    }
+    
+    async function loadNotifications() {
+        const { data, error } = await supabase.from('notifications').select('*').order('timestamp', { ascending: false });
+        if (error) { console.error(error); return; }
+        notifications = data || [];
+        localStorage.setItem('rb_notifications_backup', JSON.stringify(notifications));
+    }
+    
+    async function loadSettings() {
+        const { data, error } = await supabase.from('settings').select('*').eq('key', 'main').single();
+        if (!error && data) {
+            aboutText = data.aboutText || aboutText;
+            rulesText = data.rulesText || rulesText;
+        }
+    }
+    
+    function loadFromLocalStorage() {
+        const backupUsers = localStorage.getItem('rb_users_backup');
+        const backupPosts = localStorage.getItem('rb_posts_backup');
+        const backupSubs = localStorage.getItem('rb_subs_backup');
+        const backupNotifs = localStorage.getItem('rb_notifications_backup');
+        const backupLogs = localStorage.getItem('rb_admin_logs_backup');
+        const backupAbout = localStorage.getItem('rb_about_backup');
+        const backupRules = localStorage.getItem('rb_rules_backup');
+        if (backupUsers) users = JSON.parse(backupUsers);
+        if (backupPosts) posts = JSON.parse(backupPosts);
+        if (backupSubs) subscriptions = JSON.parse(backupSubs);
+        if (backupNotifs) notifications = JSON.parse(backupNotifs);
+        if (backupLogs) adminLogs = JSON.parse(backupLogs);
+        if (backupAbout) aboutText = backupAbout;
+        if (backupRules) rulesText = backupRules;
+        render();
+        if (!isOnline) showMessage("Офлайн режим: данные из кэша");
+    }
+    
+    async function saveUser(user) { await supabase.from('users').upsert(user); saveToLocalStorage(); }
+    async function savePost(post) { await supabase.from('posts').upsert(post); saveToLocalStorage(); }
+    async function deletePostFromDB(postId) { await supabase.from('posts').delete().eq('id', postId); saveToLocalStorage(); }
+    async function saveSubscription(userId, following) { await supabase.from('subscriptions').upsert({ userId, following }); saveToLocalStorage(); }
+    async function saveNotification(notif) { await supabase.from('notifications').insert(notif); saveToLocalStorage(); }
+    async function deleteNotification(notifId) { await supabase.from('notifications').delete().eq('id', notifId); saveToLocalStorage(); }
+    async function saveSettings(about, rules) { await supabase.from('settings').upsert({ key: 'main', aboutText: about, rulesText: rules }); saveToLocalStorage(); }
+    
+    function saveToLocalStorage() {
+        localStorage.setItem('rb_users_backup', JSON.stringify(users));
+        localStorage.setItem('rb_posts_backup', JSON.stringify(posts));
+        localStorage.setItem('rb_subs_backup', JSON.stringify(subscriptions));
+        localStorage.setItem('rb_notifications_backup', JSON.stringify(notifications));
+        localStorage.setItem('rb_admin_logs_backup', JSON.stringify(adminLogs));
+        localStorage.setItem('rb_about_backup', aboutText);
+        localStorage.setItem('rb_rules_backup', rulesText);
+    }
+    
+    async function addNotificationToDB(userId, text, postId, commentId = null) {
+        await saveNotification({ userId, text, postId, commentId, read: false, timestamp: Date.now() });
+        await loadNotifications();
+    }
+    
+    async function init() {
+        if (!isOnline) {
+            loadFromLocalStorage();
+        } else {
+            await loadUsers();
+            await loadPosts();
+            await loadSubscriptions();
+            await loadNotifications();
+            await loadSettings();
+            await loadAdminLogs();
+            
+            const adminExists = users.find(u => u.id === ADMIN_ID);
+            if (!adminExists) {
+                await saveUser({ id: ADMIN_ID, login: ADMIN_LOGIN, password: ADMIN_PASS, name: "RetroBook", isAdmin: true, verified: true, avatar: "", banned: false, banReason: "", bannedBy: "" });
+                await addAdminLog("create_admin", "RetroBook", "Создан главный администратор");
+                await loadUsers();
+            }
+        }
+        
+        const savedSession = localStorage.getItem('rb_session');
+        if (savedSession && users.find(u => u.id === savedSession && !u.banned)) currentUserId = savedSession;
+        
+        const path = window.location.pathname;
+        if (path === '/about' || path === '/about.html') currentTab = 'about';
+        else if (path === '/rules' || path === '/rules.html') currentTab = 'rules';
+        else {
+            const match = path.match(/\/users\/(.+)/);
+            if (match && match[1]) {
+                const login = decodeURIComponent(match[1]);
+                const targetUser = users.find(u => u.login === login);
+                viewingUserId = targetUser ? targetUser.id : null;
+                currentTab = 'feed';
+            } else {
+                viewingUserId = null;
+                currentTab = 'feed';
+            }
+        }
+        
+        render();
+        
+        if (isOnline) {
+            supabase.channel('public:posts').on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, () => loadPosts()).subscribe();
+            supabase.channel('public:users').on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => loadUsers()).subscribe();
+            supabase.channel('public:subscriptions').on('postgres_changes', { event: '*', schema: 'public', table: 'subscriptions' }, () => loadSubscriptions()).subscribe();
+            supabase.channel('public:notifications').on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => loadNotifications()).subscribe();
+            supabase.channel('public:admin_logs').on('postgres_changes', { event: '*', schema: 'public', table: 'admin_logs' }, () => loadAdminLogs()).subscribe();
+        }
+        
+        function updateLogo() {
+            const logoImg = document.getElementById('logoImg');
+            if (window.innerWidth <= 750) {
+                logoImg.src = 'logobook.png';
+            } else {
+                logoImg.src = 'mainbook.png';
+            }
+        }
+        updateLogo();
+        window.addEventListener('resize', updateLogo);
+    }
+    
+    function getCurrentUser() { return users.find(u=>u.id===currentUserId); }
+    function getUserById(id) { return users.find(u=>u.id===id); }
+    function isAdmin() { let u = getCurrentUser(); return u && u.isAdmin; }
+    function isSuperAdmin() { let u = getCurrentUser(); return u && u.id === ADMIN_ID; }
+    function getAvatarUrl(id) { let u = getUserById(id); return u && u.avatar ? `url('${u.avatar}')` : "url('data:image/svg+xml,%3Csvg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"%23899ab6\"%3E%3Cpath d=\"M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z\"/%3E%3C/svg%3E')"; }
+    
+    function parseMentions(text, postId, commentId = null) {
+        let mentionMatches = text.match(/@(\w+)/g);
+        if(mentionMatches && getCurrentUser()) {
+            mentionMatches.forEach(match => {
+                let login = match.substring(1);
+                let user = users.find(u => u.login === login);
+                if(user && user.id !== currentUserId) {
+                    addNotificationToDB(user.id, getCurrentUser()?.name + " отметил вас в посте", postId, commentId);
+                }
+            });
+        }
+        return text.replace(/@(\w+)/g, '<span class="mention" onclick="event.stopPropagation(); viewUserProfileByLogin(\'$1\')">@$1</span>');
+    }
+    
+    window.viewUserProfileByLogin = (login) => { 
+        let u = users.find(x=>x.login===login); 
+        if(u) { 
+            window.history.pushState({}, '', `/users/${login}`);
+            viewingUserId = u.id; 
+            render(); 
+        } 
+    };
+    
+    function isFollowing(a,b) { return subscriptions[a] && subscriptions[a].includes(b); }
+    function getFollowedCount(id) { return subscriptions[id] ? subscriptions[id].length : 0; }
+    
+    function getFollowers(userId) {
+        let followers = [];
+        for(let [subId, following] of Object.entries(subscriptions)) {
+            if(following.includes(userId)) {
+                let user = getUserById(subId);
+                if(user && !user.banned) followers.push(user);
+            }
+        }
+        return followers;
+    }
+    
+    function showFollowersModal() {
+        let user = getUserById(viewingUserId || currentUserId);
+        if(!user) return;
+        let followers = getFollowers(user.id);
+        let modal = document.createElement('div'); modal.className = 'modal';
+        modal.innerHTML = `<div class="modal-content"><h3>Подписчики ${escapeHtml(user.name)} (${followers.length})</h3><div id="followersList"></div><button id="closeFollowersModal" class="auth-btn">Закрыть</button></div>`;
+        document.body.appendChild(modal);
+        let listDiv = modal.querySelector('#followersList');
+        if(followers.length === 0) listDiv.innerHTML = '<p>Нет подписчиков</p>';
+        else {
+            followers.forEach(f => {
+                let div = document.createElement('div'); div.className = 'followers-item';
+                div.innerHTML = `<strong>${escapeHtml(f.name)}</strong> ${f.verified ? '<span class="verified-icon">✔</span>' : ''}`;
+                div.onclick = () => { 
+                    window.history.pushState({}, '', `/users/${f.login}`);
+                    viewingUserId = f.id; 
+                    modal.remove(); 
+                    render(); 
+                };
+                listDiv.appendChild(div);
+            });
+        }
+        modal.querySelector('#closeFollowersModal').onclick = () => modal.remove();
+    }
+    
+    function showSubsModal() { 
+        let u = getUserById(viewingUserId || currentUserId);
+        if(!u) return; 
+        let ids = subscriptions[u.id] || [];
+        let usersList = ids.map(id=>getUserById(id)).filter(x=>x && !x.banned);
+        let modal = document.createElement('div'); modal.className = 'modal';
+        modal.innerHTML = `<div class="modal-content"><h3>Подписки ${escapeHtml(u.name)} (${usersList.length})</h3><div id="subsList"></div><button id="closeSubsModal" class="auth-btn">Закрыть</button></div>`;
+        document.body.appendChild(modal);
+        let listDiv = modal.querySelector('#subsList');
+        if(usersList.length === 0) listDiv.innerHTML = '<p>Нет подписок</p>';
+        else {
+            usersList.forEach(u => {
+                let div = document.createElement('div'); div.className = 'subs-item';
+                div.innerHTML = `<strong>${escapeHtml(u.name)}</strong> ${u.verified ? '<span class="verified-icon">✔</span>' : ''}`;
+                div.onclick = () => { 
+                    window.history.pushState({}, '', `/users/${u.login}`);
+                    viewingUserId = u.id; 
+                    modal.remove(); 
+                    render(); 
+                };
+                listDiv.appendChild(div);
+            });
+        }
+        modal.querySelector('#closeSubsModal').onclick = () => modal.remove();
+    }
+    
+    async function toggleFollow(a,b) {
+        if(a===b) { showMessage("Нельзя подписаться на себя"); return; }
+        if(!subscriptions[a]) subscriptions[a] = [];
+        let i = subscriptions[a].indexOf(b);
+        if(i===-1) subscriptions[a].push(b);
+        else subscriptions[a].splice(i,1);
+        await saveSubscription(a, subscriptions[a]);
+        await loadSubscriptions();
+        render();
+        showMessage(i===-1 ? "Вы подписались" : "Вы отписались");
+        await addAdminLog(i===-1 ? "subscribe" : "unsubscribe", getUserById(b)?.name || b, `Пользователь ${getUserById(a)?.name} ${i===-1 ? "подписался на" : "отписался от"} ${getUserById(b)?.name}`);
+    }
+    
+    function checkSpam(userId) {
+        const now = Date.now();
+        if (!userPostTimestamps[userId]) userPostTimestamps[userId] = [];
+        userPostTimestamps[userId].push(now);
+        const recent = userPostTimestamps[userId].filter(t => now - t < 5000);
+        userPostTimestamps[userId] = recent;
+        if (recent.length > 10) {
+            const user = users.find(u => u.id === userId);
+            if (user && !user.isAdmin) {
+                user.banned = true;
+                user.banReason = "СПАМ (более 10 сообщений за 5 секунд)";
+                user.bannedBy = getCurrentUser()?.name || "Система";
+                saveUser(user);
+                if (currentUserId === userId) {
+                    currentUserId = null;
+                    viewingUserId = null;
+                    localStorage.removeItem('rb_session');
+                    alert("Аккаунт заблокирован за СПАМ! Пишите на retrobook23415@inbox.ru");
+                }
+                render();
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    async function createPost(text, photo, audio) {
+        let u = getCurrentUser(); if(!u || u.banned) { showMessage("Войдите в аккаунт"); return false; }
+        if(text.length > 1500) { showMessage("Текст не может превышать 1500 символов"); return false; }
+        if(!text.trim() && !photo && !audio) { showMessage("Напишите текст или добавьте файл"); return false; }
+        if (!checkSpam(u.id)) return false;
+        let newPost = { 
+            id: Date.now().toString(), 
+            authorId: u.id, 
+            authorName: u.name, 
+            verified: u.verified || u.isAdmin, 
+            timestamp: Date.now(), 
+            text: text.trim() || "Новый пост", 
+            photo: photo || "", 
+            audio: audio || "", 
+            likes: [], 
+            comments: [] 
+        };
+        await savePost(newPost);
+        await loadPosts();
+        parseMentions(text, newPost.id);
+        render();
+        await addAdminLog("create_post", u.name, `Создан пост: ${text.substring(0, 100)}`);
+        return true;
+    }
+    
+    window.deletePost = async function(id) { 
+        let u=getCurrentUser(), p=posts.find(x=>x.id==id); 
+        if(p && u && (u.id===p.authorId || u.isAdmin)) { 
+            await deletePostFromDB(id);
+            await loadPosts();
+            render(); 
+            showMessage("Пост удалён");
+            await addAdminLog("delete_post", p.authorName, `Удалён пост: ${p.text.substring(0, 100)}`);
+        } else showMessage("Нет прав для удаления"); 
+    };
+    
+    window.toggleLike = async function(id) { 
+        let u=getCurrentUser(); if(!u) { showMessage("Войдите в аккаунт"); return; } 
+        let p=posts.find(x=>x.id==id); 
+        if(p){ 
+            let i=p.likes.indexOf(u.id); 
+            if(i===-1) p.likes.push(u.id); 
+            else p.likes.splice(i,1); 
+            await savePost(p);
+            await loadPosts();
+            render(); 
+        } 
+    };
+    
+    window.addComment = async function(id) { 
+        let inp = document.getElementById(`cmt_${id}`); 
+        if(!inp || !inp.value.trim()) return;
+        let u=getCurrentUser(); if(!u) { showMessage("Войдите в аккаунт"); return; } 
+        let p=posts.find(x=>x.id==id); 
+        if(p){ 
+            let commentText = inp.value.trim();
+            p.comments.push({ authorId: u.id, author: u.name, verified: u.verified || u.isAdmin, text: commentText, timestamp: Date.now() }); 
+            await savePost(p);
+            await loadPosts();
+            parseMentions(commentText, p.id, p.comments.length-1);
+            inp.value='';
+            render(); 
+        } 
+    };
+    
+    window.deleteComment = async function(postId, idx) { 
+        let u=getCurrentUser(), p=posts.find(x=>x.id==postId); 
+        if(p && p.comments[idx] && u && (u.id===p.comments[idx].authorId || u.isAdmin)) { 
+            p.comments.splice(idx,1); 
+            await savePost(p);
+            await loadPosts();
+            render(); 
+            showMessage("Комментарий удалён");
+            await addAdminLog("delete_comment", p.authorName, `Удалён комментарий из поста ${p.text.substring(0, 50)}`);
+        } else showMessage("Нет прав для удаления"); 
+    };
+    
+    window.viewUserProfile = function(id) { 
+        let user = getUserById(id);
+        if(user) window.history.pushState({}, '', `/users/${user.login}`);
+        if(id === currentUserId) viewingUserId = null;
+        else viewingUserId = id; 
+        currentTab = 'feed';
+        render(); 
+    };
+    window.goToMain = function() { 
+        window.history.pushState({}, '', '/');
+        viewingUserId = null; 
+        currentTab = 'feed';
+        render(); 
+    };
+    
+    window.giveVerification = async function(id) { 
+        if(!isAdmin()) return; 
+        let u = getUserById(id); 
+        if(u && !u.isAdmin && !u.verified) { 
+            u.verified = true; 
+            await saveUser(u);
+            for(let post of posts.filter(p => p.authorId === id)) { post.verified = true; await savePost(post); }
+            await loadUsers();
+            await loadPosts();
+            render(); 
+            showMessage("Галочка выдана");
+            await addAdminLog("give_verification", u.name, `Выдана галочка пользователю ${u.name}`);
+        } 
+    };
+    
+    window.removeVerification = async function(id) { 
+        if(!isAdmin()) return; 
+        let u = getUserById(id); 
+        if(u && !u.isAdmin && u.verified) { 
+            u.verified = false; 
+            await saveUser(u);
+            for(let post of posts.filter(p => p.authorId === id)) { post.verified = false; await savePost(post); }
+            await loadUsers();
+            await loadPosts();
+            render(); 
+            showMessage("Галочка удалена");
+            await addAdminLog("remove_verification", u.name, `Удалена галочка у пользователя ${u.name}`);
+        } 
+    };
+    
+    window.makeAdmin = async function(id) { 
+        if(!isSuperAdmin()) { showMessage("Только главный администратор может выдавать права администратора"); return; }
+        let u = getUserById(id); 
+        if(u && !u.isAdmin) { 
+            u.isAdmin = true; 
+            await saveUser(u);
+            await loadUsers();
+            render(); 
+            showMessage("Пользователь назначен администратором");
+            await addAdminLog("make_admin", u.name, `Назначен администратором ${u.name}`);
+        } 
+    };
+    
+    window.removeAdmin = async function(id) { 
+        if(!isSuperAdmin()) { showMessage("Только главный администратор может удалять права администратора"); return; }
+        let u = getUserById(id); 
+        if(u && u.isAdmin && u.id !== ADMIN_ID) { 
+            u.isAdmin = false; 
+            await saveUser(u);
+            await loadUsers();
+            render(); 
+            showMessage("Права администратора удалены");
+            await addAdminLog("remove_admin", u.name, `Лишён прав администратора ${u.name}`);
+        } else if(u.id === ADMIN_ID) {
+            showMessage("Нельзя удалить права главного администратора");
+        }
+    };
+    
+    window.banUser = async function(id) { 
+        if(!isAdmin()) return; 
+        let reason = document.getElementById(`reason_${id}`)?.value; 
+        let u=getUserById(id); 
+        let admin = getCurrentUser();
+        if(u && !u.isAdmin) { 
+            u.banned=true; 
+            u.banReason=reason||"Нарушение правил"; 
+            u.bannedBy = admin?.name || "Администратор";
+            await saveUser(u);
+            await loadUsers();
+            if(currentUserId===id) { 
+                currentUserId=null; 
+                viewingUserId=null; 
+                localStorage.removeItem('rb_session');
+                alert("Аккаунт заблокирован! Причина: " + u.banReason + "\nЗаблокировал: " + u.bannedBy + "\nПишите на retrobook23415@inbox.ru");
+            } 
+            render();
+            await addAdminLog("ban_user", u.name, `Заблокирован пользователь ${u.name} по причине: ${u.banReason}`);
+        } 
+    };
+    
+    window.unbanUser = async function(id) { 
+        if(!isAdmin()) return; 
+        let u=getUserById(id); 
+        if(u && u.banned) { 
+            u.banned=false; 
+            u.banReason=""; 
+            u.bannedBy="";
+            await saveUser(u);
+            await loadUsers();
+            render(); 
+            showMessage("Пользователь разбанен");
+            await addAdminLog("unban_user", u.name, `Разбанен пользователь ${u.name}`);
+        } 
+    };
+    
+    async function updateAbout(text) { 
+        if(getCurrentUser()?.login===ADMIN_LOGIN) { 
+            aboutText=text; 
+            await saveSettings(aboutText, rulesText);
+            render(); 
+            showMessage("О сайте обновлено");
+            await addAdminLog("update_about", "Сайт", "Обновлён раздел О сайте");
+        } 
+    }
+    
+    async function updateRules(text) { 
+        if(getCurrentUser()?.login===ADMIN_LOGIN) { 
+            rulesText=text; 
+            await saveSettings(aboutText, rulesText);
+            render(); 
+            showMessage("Правила обновлены");
+            await addAdminLog("update_rules", "Сайт", "Обновлены правила сайта");
+        } 
+    }
+    
+    async function login(login, pass) { 
+        let u=users.find(x=>x.login===login && x.password===pass); 
+        if(!u) { showMessage("Неверный логин или пароль"); return; } 
+        if(u.banned) { 
+            alert("Аккаунт заблокирован!\nПричина: " + (u.banReason || "нарушение правил") + "\nЗаблокировал: " + (u.bannedBy || "Администратор") + "\nПишите на retrobook23415@inbox.ru");
+            return; 
+        } 
+        currentUserId=u.id; 
+        viewingUserId=null; 
+        window.history.pushState({}, '', '/');
+        localStorage.setItem('rb_session', currentUserId);
+        render(); 
+        showMessage("Добро пожаловать, "+u.name);
+        await addAdminLog("login", u.name, `Вход в аккаунт`);
+    }
+    
+    function logout() { 
+        if (currentUserId) {
+            let user = getCurrentUser();
+            if (user) addAdminLog("logout", user.name, `Выход из аккаунта`);
+        }
+        currentUserId=null; 
+        viewingUserId=null; 
+        window.history.pushState({}, '', '/');
+        localStorage.removeItem('rb_session');
+        render(); 
+    }
+    
+    async function register(login, pass, name) { 
+        if(users.find(x=>x.login===login)) { showMessage("Логин занят"); return; } 
+        if(login.length<3 || pass.length<3 || name.length<2) { showMessage("Минимум 3 символа для логина и пароля, 2 для имени"); return; } 
+        let newId = "user_"+Date.now();
+        await saveUser({ id: newId, login, password: pass, name, isAdmin: false, verified: false, avatar: "", banned: false, banReason: "", bannedBy: "" });
+        await loadUsers();
+        showMessage("Регистрация успешна! Войдите.");
+        let admin = getCurrentUser();
+        if (admin && admin.isAdmin) await addAdminLog("register", name, `Зарегистрирован новый пользователь ${name}`);
+    }
+    
+    function showRegisterModal() {
+        let modal = document.createElement('div'); modal.className = 'modal';
+        modal.innerHTML = `<div class="modal-content"><h3>Регистрация</h3><input type="text" id="regLogin" placeholder="Логин (мин. 3)"><input type="password" id="regPassword" placeholder="Пароль (мин. 3)"><input type="text" id="regName" placeholder="Ваше имя (мин. 2)"><button id="regSubmit" class="auth-btn">Зарегистрироваться</button><button id="regCancel" class="auth-btn" style="background:#8b9dc3;">Отмена</button></div>`;
+        document.body.appendChild(modal);
+        document.getElementById('regSubmit').onclick = () => {
+            register(regLogin.value.trim(), regPassword.value, regName.value.trim());
+            modal.remove();
+        };
+        document.getElementById('regCancel').onclick = () => modal.remove();
+    }
+    
+    function showAvatarUpload() { 
+        let u=getCurrentUser(); if(!u) return; 
+        let modal=document.createElement('div'); 
+        modal.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:1000'; 
+        modal.innerHTML=`<div style="background:white;width:320px;padding:20px;border-radius:8px;text-align:center;"><h3>Сменить аватар</h3><div id="avPrev" style="width:100px;height:100px;border-radius:50%;background-size:cover;margin:10px auto;"></div><input type="file" id="avFile" accept="image/*"><div><button id="upBtn" class="auth-btn">Выбрать</button><button id="canBtn" class="auth-btn" style="background:#8b9dc3;">Отмена</button></div></div>`; 
+        document.body.appendChild(modal); 
+        let prev=modal.querySelector('#avPrev'); 
+        prev.style.backgroundImage=getAvatarUrl(u.id); 
+        modal.querySelector('#avFile').onchange=e=>{let f=e.target.files[0]; if(f && f.size<=5*1024*1024){let r=new FileReader(); r.onload=ev=>prev.style.backgroundImage=`url('${ev.target.result}')`; r.readAsDataURL(f);} else showMessage("Файл больше 5 МБ");}; 
+        modal.querySelector('#upBtn').onclick=async()=>{let f=modal.querySelector('#avFile').files[0]; if(f){let r=new FileReader(); r.onload=async(ev)=>{u.avatar=ev.target.result; await saveUser(u); await loadUsers(); modal.remove(); render(); showMessage("Аватар обновлён");}; r.readAsDataURL(f);} else showMessage("Выберите файл");}; 
+        modal.querySelector('#canBtn').onclick=()=>modal.remove(); 
+    }
+    
+    function showAccountModal() {
+        let u = getCurrentUser();
+        if(!u) return;
+        let modal = document.createElement('div'); modal.className = 'modal';
+        modal.innerHTML = `<div class="modal-content"><h3>Управление аккаунтом</h3>
+            <input type="text" id="newLogin" placeholder="Новый логин" value="${escapeHtml(u.login)}">
+            <input type="password" id="newPassword" placeholder="Новый пароль">
+            <input type="password" id="confirmPassword" placeholder="Подтвердите пароль">
+            <button id="saveChangesBtn" class="auth-btn">Сохранить изменения</button>
+            <button id="deleteAccountBtn" class="auth-btn" style="background:#dd3b3b;">Удалить аккаунт</button>
+            <button id="closeAccountModal" class="auth-btn" style="background:#8b9dc3;">Отмена</button>
+        </div>`;
+        document.body.appendChild(modal);
+        
+        document.getElementById('saveChangesBtn').onclick = async () => {
+            let newLogin = document.getElementById('newLogin').value.trim();
+            let newPass = document.getElementById('newPassword').value;
+            let confirmPass = document.getElementById('confirmPassword').value;
+            if(newLogin && newLogin !== u.login) {
+                if(users.find(x=>x.login === newLogin && x.id !== u.id)) { showMessage("Логин уже занят"); return; }
+                u.login = newLogin;
+            }
+            if(newPass) {
+                if(newPass.length < 3) { showMessage("Пароль должен быть не менее 3 символов"); return; }
+                if(newPass !== confirmPass) { showMessage("Пароли не совпадают"); return; }
+                u.password = newPass;
+            }
+            await saveUser(u);
+            await loadUsers();
+            showMessage("Данные обновлены");
+            modal.remove();
+            render();
+            await addAdminLog("update_account", u.name, `Обновлены данные аккаунта`);
+        };
+        
+        document.getElementById('deleteAccountBtn').onclick = async () => {
+            if(confirm("Вы уверены? Все ваши посты будут удалены безвозвратно!")) {
+                for(let p of posts.filter(p => p.authorId === u.id)) await deletePostFromDB(p.id);
+                await supabase.from('users').delete().eq('id', u.id);
+                if(currentUserId === u.id) { currentUserId = null; viewingUserId = null; localStorage.removeItem('rb_session'); }
+                modal.remove();
+                await loadUsers();
+                await loadPosts();
+                render();
+                showMessage("Аккаунт удалён");
+                await addAdminLog("delete_account", u.name, `Удалён аккаунт ${u.name}`);
+            }
+        };
+        document.getElementById('closeAccountModal').onclick = () => modal.remove();
+    }
+    
+    function renderAuth() {
+        let u = getCurrentUser(), c = document.getElementById('authWidget');
+        if(!u) c.innerHTML=`<div class="auth-area"><input id="logLogin" class="auth-input" placeholder="Логин"><input id="logPass" type="password" class="auth-input" placeholder="Пароль"><button id="doLogin" class="auth-btn">Войти</button><button id="doReg" class="auth-btn">Регистрация</button></div>`;
+        else c.innerHTML=`<div class="user-info"><span>${escapeHtml(u.name)} ${u.verified ? '<span class="verified-icon">✔</span>' : ''} ${u.isAdmin ? '<span class="admin-badge">АДМИН</span>' : ''}</span><button id="logoutBtn" class="auth-btn">Выйти</button>${u.isAdmin ? '<button id="openAdmin" class="auth-btn">Панель</button>' : ''}</div>`;
+        document.getElementById('doLogin')?.addEventListener('click',()=>login(logLogin.value,logPass.value));
+        document.getElementById('doReg')?.addEventListener('click',showRegisterModal);
+        document.getElementById('logoutBtn')?.addEventListener('click',logout);
+        document.getElementById('openAdmin')?.addEventListener('click',()=>document.getElementById('adminPanel').classList.add('open'));
+        
+        let bell = document.getElementById('notificationsBtn');
+        let dropdown = document.getElementById('notificationsDropdown');
+        if(u) {
+            bell.style.display = 'inline-block';
+            bell.onclick = (e) => { e.stopPropagation(); dropdown.classList.toggle('show'); renderNotifications(); };
+            document.addEventListener('click', (e) => { if(dropdown && !dropdown.contains(e.target) && e.target !== bell) dropdown.classList.remove('show'); });
+        } else { bell.style.display = 'none'; }
+        
+        let sidebarAccountBtn = document.getElementById('sidebarAccountBtn');
+        let mobileAccountBtn = document.getElementById('mobileAccountBtn');
+        if(u) {
+            sidebarAccountBtn.style.display = 'block';
+            mobileAccountBtn.style.display = 'block';
+            sidebarAccountBtn.onclick = showAccountModal;
+            mobileAccountBtn.onclick = showAccountModal;
+        } else {
+            sidebarAccountBtn.style.display = 'none';
+            mobileAccountBtn.style.display = 'none';
+        }
+    }
+    
+    function renderNotifications() {
+        let u = getCurrentUser();
+        if(!u) return;
+        let dropdown = document.getElementById('notificationsDropdown');
+        let userNotifs = notifications.filter(n => n.userId === u.id).slice(0, 30);
+        if(userNotifs.length === 0) { dropdown.innerHTML = '<div class="notification-item">Нет уведомлений</div>'; return; }
+        dropdown.innerHTML = userNotifs.map(n => `<div class="notification-item" data-id="${n.id}" data-postid="${n.postId}">${escapeHtml(n.text)} <button class="notification-delete" data-id="${n.id}">✕</button></div>`).join('');
+        dropdown.querySelectorAll('.notification-item').forEach(el => {
+            el.querySelector('.notification-delete')?.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                await deleteNotification(el.dataset.id);
+                await loadNotifications();
+            });
+            el.addEventListener('click', (e) => {
+                if(e.target.classList.contains('notification-delete')) return;
+                dropdown.classList.remove('show');
+                if(el.dataset.postid) { viewingUserId = null; render(); document.getElementById(`post_${el.dataset.postid}`)?.scrollIntoView({ behavior: 'smooth' }); }
+            });
+        });
+    }
+    
+    function getFilteredPosts() {
+        let filtered = [...posts].filter(p => !getUserById(p.authorId)?.banned);
+        if (viewingUserId !== null) filtered = filtered.filter(p => p.authorId === viewingUserId);
+        if (currentFeedMode === 'recent') filtered.sort((a,b) => b.timestamp - a.timestamp);
+        else { for (let i = filtered.length - 1; i > 0; i--) { let j = Math.floor(Math.random() * (i + 1)); [filtered[i], filtered[j]] = [filtered[j], filtered[i]]; } }
+        return filtered;
+    }
+    
+    function renderFeed() {
+        let c = document.getElementById('feedContainer'), cu = getCurrentUser();
+        let filtered = getFilteredPosts();
+        if(!filtered.length) { 
+            if(viewingUserId !== null) c.innerHTML='<div style="background:white;padding:20px;text-align:center;">У пользователя нет постов</div>';
+            else c.innerHTML='<div style="background:white;padding:20px;text-align:center;">Нет постов</div>';
+            return; 
+        }
+        let html = '';
+        for(let p of filtered){
+            let canDel = cu && (cu.id === p.authorId || cu.isAdmin), isLiked = cu && p.likes.includes(cu.id);
+            let timeStr = formatTime(p.timestamp);
+            let isSubscribed = cu && isFollowing(cu.id, p.authorId) && cu.id !== p.authorId;
+            let contentHtml = linkify(applyFormatting(escapeHtml(p.text).replace(/\n/g, '<br>')));
+            html += `<div class="post" id="post_${p.id}"><div class="post-header" onclick="viewUserProfile('${p.authorId}')"><div class="post-avatar" style="background-image:${getAvatarUrl(p.authorId)}"></div><div><span class="post-author">${escapeHtml(p.authorName)} ${p.verified ? '<span class="verified-icon">✔</span>' : ''}</span><span class="post-time">${timeStr}</span>${cu && cu.id !== p.authorId ? `<button class="comment-action" style="margin-left:8px;" onclick="event.stopPropagation(); toggleFollow('${cu.id}','${p.authorId}')">${isSubscribed ? 'Отписаться' : 'Подписаться'}</button>` : ''}</div></div><div class="post-content">${parseMentions(contentHtml, p.id)}</div>${p.photo ? `<img class="post-photo" src="${p.photo}">` : ''}${p.audio ? `<div class="post-audio"><audio controls src="${p.audio}"></audio></div>` : ''}<div class="post-stats"><button class="like-btn" onclick="toggleLike('${p.id}')">Нравится (${p.likes.length})</button>${canDel ? `<button class="delete-btn" onclick="deletePost('${p.id}')">Удалить пост</button>` : ''}</div><div class="comments-section">${p.comments.map((c,i)=>`<div class="comment"><div class="comment-avatar" style="background-image:${getAvatarUrl(c.authorId)}" onclick="viewUserProfile('${c.authorId}')"></div><div class="comment-content"><strong onclick="viewUserProfile('${c.authorId}')">${escapeHtml(c.author)} ${c.verified ? '<span class="verified-icon">✔</span>' : ''}</strong> ${parseMentions(linkify(applyFormatting(escapeHtml(c.text)).replace(/\n/g, '<br>')), p.id, i)}<div class="comment-actions">${cu && (cu.id===c.authorId || cu.isAdmin) ? `<button class="comment-action delete" onclick="deleteComment('${p.id}',${i})">Удалить комментарий</button>` : ''}</div></div></div>`).join('')}<div class="add-comment"><input id="cmt_${p.id}" class="comment-input" placeholder="Написать комментарий..."><button class="comment-btn" onclick="addComment('${p.id}')">Ответить</button></div></div></div>`;
+        }
+        c.innerHTML = html;
+    }
+    
+    function renderAbout() { let c = document.getElementById('aboutContainer'), isCr = getCurrentUser()?.login === ADMIN_LOGIN; c.innerHTML = `<h3>О сайте</h3><div style="margin:15px 0; line-height:1.5;">${escapeHtml(aboutText).replace(/\n/g,'<br>')}</div>${isCr ? `<textarea id="aboutEdit" rows="5" style="width:100%;">${escapeHtml(aboutText)}</textarea><button id="saveAbout" class="auth-btn">Сохранить</button>` : ''}`; if(isCr) document.getElementById('saveAbout')?.addEventListener('click',()=>updateAbout(document.getElementById('aboutEdit').value)); }
+    function renderRules() { let c = document.getElementById('rulesContainer'), isCr = getCurrentUser()?.login === ADMIN_LOGIN; c.innerHTML = `<h3>Правила</h3><div style="margin:15px 0; white-space:pre-wrap; line-height:1.5;">${escapeHtml(rulesText)}</div>${isCr ? `<textarea id="rulesEdit" rows="8" style="width:100%;">${escapeHtml(rulesText)}</textarea><button id="saveRules" class="auth-btn">Сохранить</button>` : ''}`; if(isCr) document.getElementById('saveRules')?.addEventListener('click',()=>updateRules(document.getElementById('rulesEdit').value)); }
+    
+    function renderPostArea() { 
+        document.getElementById('postArea').style.display = getCurrentUser() ? 'block' : 'none';
+        let textarea = document.getElementById('postText');
+        let counter = document.getElementById('charCounter');
+        if(textarea) {
+            textarea.addEventListener('input', function() {
+                let len = this.value.length;
+                counter.innerText = len + ' / 1500';
+                if(len > 1500) this.value = this.value.substring(0, 1500);
+            });
+        }
+    }
+    
+    function renderSidebar() { 
+        let u = getCurrentUser(), v = getUserById(viewingUserId);
+        let displayUser = v || u;
+        let isViewingOther = viewingUserId !== null && viewingUserId !== currentUserId;
+        document.getElementById('sidebarAvatar').style.backgroundImage = getAvatarUrl(displayUser?.id);
+        document.getElementById('sidebarName').innerHTML = displayUser ? escapeHtml(displayUser.name) : "Гость";
+        
+        const verifiedBadgeSpan = document.getElementById('sidebarVerifiedBadge');
+        if(displayUser && displayUser.verified) verifiedBadgeSpan.innerHTML = '<span class="verified-icon">✔</span>';
+        else verifiedBadgeSpan.innerHTML = '';
+        
+        document.getElementById('sidebarStatus').innerText = displayUser ? (displayUser.isAdmin ? "Администратор" : (displayUser.verified ? "Верифицирован" : "Пользователь")) : "";
+        
+        let subsBtn = document.getElementById('sidebarSubsBtn'); 
+        let followersBtn = document.getElementById('sidebarFollowersBtn');
+        
+        const followContainer = document.getElementById('sidebarFollowBtnContainer');
+        if(!document.getElementById('sidebarFollowBtn')) {
+            const container = document.createElement('div');
+            container.id = 'sidebarFollowBtnContainer';
+            container.style.marginTop = '8px';
+            document.getElementById('sidebarStatus').after(container);
+        }
+        const container = document.getElementById('sidebarFollowBtnContainer');
+        if(viewingUserId && viewingUserId !== currentUserId && u) {
+            const isSubscribed = isFollowing(currentUserId, viewingUserId);
+            container.innerHTML = `<button class="follow-btn-on-page ${isSubscribed ? 'following' : ''}" onclick="toggleFollow('${currentUserId}', '${viewingUserId}')">${isSubscribed ? 'Отписаться' : 'Подписаться'}</button>`;
+            container.style.display = 'block';
+        } else {
+            container.style.display = 'none';
+        }
+        
+        if(displayUser) { 
+            subsBtn.style.display = 'block'; 
+            subsBtn.innerText = "ПОДПИСКИ (" + getFollowedCount(displayUser.id) + ")"; 
+            subsBtn.onclick = showSubsModal;
+            let followersCount = getFollowers(displayUser.id).length;
+            followersBtn.style.display = 'block';
+            followersBtn.innerText = "ПОДПИСЧИКИ (" + followersCount + ")";
+            followersBtn.onclick = showFollowersModal;
+        } else { 
+            subsBtn.style.display = 'none';
+            followersBtn.style.display = 'none';
+        }
+        
+        let backBtn = document.getElementById('sidebarBackBtn');
+        if(isViewingOther && u) { backBtn.style.display = 'block'; backBtn.onclick = goToMain; } 
+        else backBtn.style.display = 'none';
+        document.getElementById('sidebarAvatar').onclick = () => { if(u && (!viewingUserId || viewingUserId === u.id)) showAvatarUpload(); }; 
+    }
+    
+    function renderMobile() { 
+        let u = getCurrentUser(); 
+        let isViewingOther = viewingUserId !== null && viewingUserId !== currentUserId;
+        let displayUser = getUserById(viewingUserId) || u;
+        document.getElementById('mobileAvatar').style.backgroundImage = getAvatarUrl(displayUser?.id); 
+        document.getElementById('mobileName').innerHTML = displayUser ? escapeHtml(displayUser.name) : "Гость";
+        
+        const mobileBadgeSpan = document.getElementById('mobileVerifiedBadge');
+        if(displayUser && displayUser.verified) mobileBadgeSpan.innerHTML = '<span class="verified-icon">✔</span>';
+        else mobileBadgeSpan.innerHTML = '';
+        
+        let subsBtn = document.getElementById('mobileSubsBtn');
+        let followersBtn = document.getElementById('mobileFollowersBtn');
+        
+        if(displayUser) {
+            subsBtn.style.display = 'block';
+            subsBtn.innerText = "ПОДПИСКИ (" + getFollowedCount(displayUser.id) + ")";
+            subsBtn.onclick = showSubsModal;
+            let followersCount = getFollowers(displayUser.id).length;
+            followersBtn.style.display = 'block';
+            followersBtn.innerText = "ПОДПИСЧИКИ (" + followersCount + ")";
+            followersBtn.onclick = showFollowersModal;
+        } else {
+            subsBtn.style.display = 'none';
+            followersBtn.style.display = 'none';
+        }
+        
+        let backBtn = document.getElementById('mobileBackBtn');
+        if(isViewingOther && u) { backBtn.style.display = 'block'; backBtn.onclick = goToMain; } 
+        else backBtn.style.display = 'none';
+        document.getElementById('mobileAvatar').onclick = () => { if(u && (!viewingUserId || viewingUserId === u.id)) showAvatarUpload(); }; 
+    }
+    
+    function renderAdmin() {
+        if(!isAdmin()) { 
+            document.getElementById('adminUsers').innerHTML = '<div>Доступно админу</div>'; 
+            document.getElementById('adminHistory').innerHTML = ''; 
+            return; 
+        }
+        let non = users.filter(u => !u.isAdmin || u.id === ADMIN_ID);
+        let us = ''; 
+        for(let u of non) {
+            us += `<div class="admin-user-item"><b>${escapeHtml(u.name)}</b> (${escapeHtml(u.login)}) ${u.banned ? '[ЗАБЛОКИРОВАН]' : ''}<br>
+            ${u.verified ? `<button class="unverify-btn" onclick="removeVerification('${u.id}')">Удалить галочку</button>` : `<button class="verify-btn" onclick="giveVerification('${u.id}')">Выдать галочку</button>`}
+            ${!u.isAdmin && isSuperAdmin() ? `<button class="make-admin-btn" onclick="makeAdmin('${u.id}')">Сделать админом</button>` : ''}
+            ${u.isAdmin && u.id !== ADMIN_ID && isSuperAdmin() ? `<button class="make-admin-btn" onclick="removeAdmin('${u.id}')">Убрать админа</button>` : ''}
+            ${u.banned ? `<button class="unban-btn" onclick="unbanUser('${u.id}')">Разбанить</button>` : `<input id="reason_${u.id}" placeholder="Причина" style="width:100%;margin:5px 0;"><button class="ban-btn" onclick="banUser('${u.id}')">Заблокировать</button>`}
+            </div>`;
+        }
+        document.getElementById('adminUsers').innerHTML = us || '<div>Нет пользователей</div>';
+        
+        let logsHtml = '<div style="font-weight:bold; margin-bottom:5px;">История действий администраторов:</div>';
+        for(let log of adminLogs.slice(0, 50)) {
+            logsHtml += `<div class="admin-log-item"><b>${escapeHtml(log.adminName)}</b> [${log.date}]<br>${escapeHtml(log.action)}: ${escapeHtml(log.targetName)}<br><small>${escapeHtml(log.details)}</small></div>`;
+        }
+        if (adminLogs.length === 0) logsHtml += '<div>Нет записей в истории</div>';
+        document.getElementById('adminHistory').innerHTML = logsHtml;
+        
+        let sel = document.getElementById('userSelect'); 
+        if(sel) sel.innerHTML = '<option value="">Выберите</option>' + non.map(u => `<option value="${u.id}">${escapeHtml(u.name)} ${u.verified ? '(галочка есть)' : ''}</option>`).join('');
+    }
+    
+    function formatText(text, format) {
+        let selection = document.getElementById('postText');
+        let start = selection.selectionStart;
+        let end = selection.selectionEnd;
+        let selectedText = text.substring(start, end);
+        let replacement = '';
+        switch(format) {
+            case 'bold': replacement = '**' + selectedText + '**'; break;
+            case 'italic': replacement = '*' + selectedText + '*'; break;
+            case 'underline': replacement = '__' + selectedText + '__'; break;
+            case 'strike': replacement = '~~' + selectedText + '~~'; break;
+            default: return text;
+        }
+        return text.substring(0, start) + replacement + text.substring(end);
+    }
+    
+    document.getElementById('publishBtn')?.addEventListener('click', () => {
+        let txt = document.getElementById('postText').value, img = document.getElementById('postImage').files[0], aud = document.getElementById('postAudio').files[0];
+        if(txt.length > 1500) { showMessage("Текст не может превышать 1500 символов"); return; }
+        let img64 = "", aud64 = "", pend = 0;
+        let pub = () => { if(pend === 0) createPost(txt, img64, aud64); };
+        if(img){ 
+            if(img.size > 5*1024*1024){ showMessage("Файл больше 5 МБ"); return; } 
+            pend++; 
+            let r = new FileReader(); 
+            r.onload = e => { img64 = e.target.result; pend--; pub(); }; 
+            r.readAsDataURL(img); 
+        }
+        if(aud){ 
+            if(aud.size > 10*1024*1024){ showMessage("Аудио больше 10 МБ"); return; } 
+            pend++; 
+            let r = new FileReader(); 
+            r.onload = e => { aud64 = e.target.result; pend--; pub(); }; 
+            r.readAsDataURL(aud); 
+        }
+        if(pend === 0) createPost(txt, "", "");
+        document.getElementById('postText').value = ''; 
+        document.getElementById('postImage').value = ''; 
+        document.getElementById('postAudio').value = '';
+    });
+    
+    document.querySelectorAll('.format-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            let textarea = document.getElementById('postText');
+            textarea.value = formatText(textarea.value, btn.dataset.format);
+            textarea.focus();
+        });
+    });
+    
+    document.getElementById('closeAdmin')?.addEventListener('click', () => document.getElementById('adminPanel').classList.remove('open'));
+    document.getElementById('giveBadge')?.addEventListener('click', () => { let s = document.getElementById('userSelect'); if(s && s.value) giveVerification(s.value); else showMessage("Выберите пользователя"); });
+    document.getElementById('removeBadge')?.addEventListener('click', () => { let s = document.getElementById('userSelect'); if(s && s.value) removeVerification(s.value); else showMessage("Выберите пользователя"); });
+    document.getElementById('makeAdminBtn')?.addEventListener('click', () => { let s = document.getElementById('userSelect'); if(s && s.value && isSuperAdmin()) makeAdmin(s.value); else if(!isSuperAdmin()) showMessage("Только главный администратор может выдавать права"); else showMessage("Выберите пользователя"); });
+    document.getElementById('removeAdminBtn')?.addEventListener('click', () => { let s = document.getElementById('userSelect'); if(s && s.value && isSuperAdmin()) removeAdmin(s.value); else if(!isSuperAdmin()) showMessage("Только главный администратор может удалять права"); else showMessage("Выберите пользователя"); });
+    
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => { 
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); 
+        btn.classList.add('active'); 
+        currentTab = btn.dataset.tab; 
+        viewingUserId = null;
+        if (currentTab === 'feed') window.history.pushState({}, '', '/');
+        else if (currentTab === 'about') window.history.pushState({}, '', '/about');
+        else if (currentTab === 'rules') window.history.pushState({}, '', '/rules');
+        render(); 
+    }));
+    document.querySelectorAll('.mobile-tab-btn').forEach(btn => btn.addEventListener('click', () => { 
+        currentTab = btn.dataset.tab; 
+        viewingUserId = null;
+        if (currentTab === 'feed') window.history.pushState({}, '', '/');
+        else if (currentTab === 'about') window.history.pushState({}, '', '/about');
+        else if (currentTab === 'rules') window.history.pushState({}, '', '/rules');
+        document.getElementById('mobileSidebar').classList.remove('open'); 
+        document.getElementById('mobileOverlay').classList.remove('open'); 
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); 
+        let act = document.querySelector(`.tab-btn[data-tab="${currentTab}"]`); 
+        if(act) act.classList.add('active'); 
+        render(); 
+    }));
+    document.querySelectorAll('.feed-tab-btn').forEach(btn => btn.addEventListener('click', () => { document.querySelectorAll('.feed-tab-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); currentFeedMode = btn.dataset.feed; renderFeed(); }));
+    document.getElementById('burgerBtn')?.addEventListener('click', () => { document.getElementById('mobileSidebar').classList.add('open'); document.getElementById('mobileOverlay').classList.add('open'); });
+    document.getElementById('closeMobile')?.addEventListener('click', () => { document.getElementById('mobileSidebar').classList.remove('open'); document.getElementById('mobileOverlay').classList.remove('open'); });
+    document.getElementById('mobileOverlay')?.addEventListener('click', () => { document.getElementById('mobileSidebar').classList.remove('open'); document.getElementById('mobileOverlay').classList.remove('open'); });
+    window.toggleFollow = toggleFollow;
+    
+    function render() {
+        renderAuth(); 
+        renderSidebar(); 
+        renderMobile(); 
+        renderPostArea();
+        let isFeed = currentTab === 'feed';
+        document.getElementById('feedContainer').style.display = isFeed ? 'block' : 'none';
+        document.getElementById('aboutContainer').style.display = currentTab === 'about' ? 'block' : 'none';
+        document.getElementById('rulesContainer').style.display = currentTab === 'rules' ? 'block' : 'none';
+        if(isFeed) renderFeed();
+        else if(currentTab === 'about') renderAbout();
+        else if(currentTab === 'rules') renderRules();
+        renderAdmin();
+    }
+    
+    init();
+</script>
+</body>
+</html>
