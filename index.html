@@ -72,7 +72,7 @@
         .admin-panel { position: fixed; right: -300px; top: 55px; width: 280px; background: white; border-left: 1px solid #ccc; padding: 15px; transition: 0.25s; z-index: 200; max-height: 85vh; overflow-y: auto; }
         .admin-panel.open { right: 0; }
         .close-admin { text-align: right; font-size: 18px; cursor: pointer; }
-        .admin-user-item, .admin-msg-item { background: #f6f7f9; margin: 6px 0; padding: 8px; border-radius: 3px; }
+        .admin-user-item, .admin-log-item { background: #f6f7f9; margin: 6px 0; padding: 8px; border-radius: 3px; }
         .ban-btn, .unban-btn, .verify-btn, .make-admin-btn { border: none; color: white; padding: 3px 8px; border-radius: 3px; cursor: pointer; font-size: 10px; margin: 2px; }
         .ban-btn { background: #dd3b3b; }
         .unban-btn { background: #5cb85c; }
@@ -220,7 +220,7 @@
     
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     
-    let users = [], posts = [], notifications = [], currentUserId = null, viewingUserId = null, currentTab = 'feed', currentFeedMode = 'recent', subscriptions = {};
+    let users = [], posts = [], notifications = [], adminLogs = [], currentUserId = null, viewingUserId = null, currentTab = 'feed', currentFeedMode = 'recent', subscriptions = {};
     let aboutText = "Добро пожаловать в RetroBook! Социальная сеть в стиле 2011 года.";
     let rulesText = "1. Уважайте других.\n2. Запрещён спам.\n3. Будьте вежливы.";
     const ADMIN_ID = "admin", ADMIN_LOGIN = "RetroBook", ADMIN_PASS = "20148812Gl";
@@ -247,6 +247,32 @@
         if (diff < 3600) return Math.floor(diff/60) + " минут назад";
         if (diff < 86400) return Math.floor(diff/3600) + " часов назад";
         return Math.floor(diff/86400) + " дней назад";
+    }
+    
+    async function addAdminLog(action, targetName, details) {
+        const admin = getCurrentUser();
+        if (!admin || !admin.isAdmin) return;
+        const logEntry = {
+            id: Date.now().toString(),
+            adminId: admin.id,
+            adminName: admin.name,
+            action: action,
+            targetName: targetName,
+            details: details,
+            timestamp: Date.now(),
+            date: new Date().toLocaleString()
+        };
+        adminLogs.unshift(logEntry);
+        if (adminLogs.length > 500) adminLogs.pop();
+        await supabase.from('admin_logs').insert(logEntry).catch(e => console.error("Log save error:", e));
+        saveToLocalStorage();
+    }
+    
+    async function loadAdminLogs() {
+        const { data, error } = await supabase.from('admin_logs').select('*').order('timestamp', { ascending: false });
+        if (!error && data) adminLogs = data;
+        else adminLogs = [];
+        localStorage.setItem('rb_admin_logs_backup', JSON.stringify(adminLogs));
     }
     
     async function loadUsers() {
@@ -291,12 +317,14 @@
         const backupPosts = localStorage.getItem('rb_posts_backup');
         const backupSubs = localStorage.getItem('rb_subs_backup');
         const backupNotifs = localStorage.getItem('rb_notifications_backup');
+        const backupLogs = localStorage.getItem('rb_admin_logs_backup');
         const backupAbout = localStorage.getItem('rb_about_backup');
         const backupRules = localStorage.getItem('rb_rules_backup');
         if (backupUsers) users = JSON.parse(backupUsers);
         if (backupPosts) posts = JSON.parse(backupPosts);
         if (backupSubs) subscriptions = JSON.parse(backupSubs);
         if (backupNotifs) notifications = JSON.parse(backupNotifs);
+        if (backupLogs) adminLogs = JSON.parse(backupLogs);
         if (backupAbout) aboutText = backupAbout;
         if (backupRules) rulesText = backupRules;
         render();
@@ -316,6 +344,7 @@
         localStorage.setItem('rb_posts_backup', JSON.stringify(posts));
         localStorage.setItem('rb_subs_backup', JSON.stringify(subscriptions));
         localStorage.setItem('rb_notifications_backup', JSON.stringify(notifications));
+        localStorage.setItem('rb_admin_logs_backup', JSON.stringify(adminLogs));
         localStorage.setItem('rb_about_backup', aboutText);
         localStorage.setItem('rb_rules_backup', rulesText);
     }
@@ -334,10 +363,12 @@
             await loadSubscriptions();
             await loadNotifications();
             await loadSettings();
+            await loadAdminLogs();
             
             const adminExists = users.find(u => u.id === ADMIN_ID);
             if (!adminExists) {
                 await saveUser({ id: ADMIN_ID, login: ADMIN_LOGIN, password: ADMIN_PASS, name: "RetroBook", isAdmin: true, verified: true, avatar: "", banned: false, banReason: "", bannedBy: "" });
+                await addAdminLog("create_admin", "RetroBook", "Создан главный администратор");
                 await loadUsers();
             }
         }
@@ -368,6 +399,7 @@
             supabase.channel('public:users').on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => loadUsers()).subscribe();
             supabase.channel('public:subscriptions').on('postgres_changes', { event: '*', schema: 'public', table: 'subscriptions' }, () => loadSubscriptions()).subscribe();
             supabase.channel('public:notifications').on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => loadNotifications()).subscribe();
+            supabase.channel('public:admin_logs').on('postgres_changes', { event: '*', schema: 'public', table: 'admin_logs' }, () => loadAdminLogs()).subscribe();
         }
     }
     
@@ -474,6 +506,7 @@
         await loadSubscriptions();
         render();
         showMessage(i===-1 ? "Вы подписались" : "Вы отписались");
+        await addAdminLog(i===-1 ? "subscribe" : "unsubscribe", getUserById(b)?.name || b, `Пользователь ${getUserById(a)?.name} ${i===-1 ? "подписался на" : "отписался от"} ${getUserById(b)?.name}`);
     }
     
     function checkSpam(userId) {
@@ -523,6 +556,7 @@
         await loadPosts();
         parseMentions(text, newPost.id);
         render();
+        await addAdminLog("create_post", u.name, `Создан пост: ${text.substring(0, 100)}`);
         return true;
     }
     
@@ -532,7 +566,8 @@
             await deletePostFromDB(id);
             await loadPosts();
             render(); 
-            showMessage("Пост удалён"); 
+            showMessage("Пост удалён");
+            await addAdminLog("delete_post", p.authorName, `Удалён пост: ${p.text.substring(0, 100)}`);
         } else showMessage("Нет прав для удаления"); 
     };
     
@@ -572,7 +607,8 @@
             await savePost(p);
             await loadPosts();
             render(); 
-            showMessage("Комментарий удалён"); 
+            showMessage("Комментарий удалён");
+            await addAdminLog("delete_comment", p.authorName, `Удалён комментарий из поста ${p.text.substring(0, 50)}`);
         } else showMessage("Нет прав для удаления"); 
     };
     
@@ -601,7 +637,8 @@
             await loadUsers();
             await loadPosts();
             render(); 
-            showMessage("Галочка выдана"); 
+            showMessage("Галочка выдана");
+            await addAdminLog("give_verification", u.name, `Выдана галочка пользователю ${u.name}`);
         } 
     };
     
@@ -615,7 +652,8 @@
             await loadUsers();
             await loadPosts();
             render(); 
-            showMessage("Галочка удалена"); 
+            showMessage("Галочка удалена");
+            await addAdminLog("remove_verification", u.name, `Удалена галочка у пользователя ${u.name}`);
         } 
     };
     
@@ -627,7 +665,8 @@
             await saveUser(u);
             await loadUsers();
             render(); 
-            showMessage("Пользователь назначен администратором"); 
+            showMessage("Пользователь назначен администратором");
+            await addAdminLog("make_admin", u.name, `Назначен администратором ${u.name}`);
         } 
     };
     
@@ -639,7 +678,8 @@
             await saveUser(u);
             await loadUsers();
             render(); 
-            showMessage("Права администратора удалены"); 
+            showMessage("Права администратора удалены");
+            await addAdminLog("remove_admin", u.name, `Лишён прав администратора ${u.name}`);
         } else if(u.id === ADMIN_ID) {
             showMessage("Нельзя удалить права главного администратора");
         }
@@ -662,7 +702,8 @@
                 localStorage.removeItem('rb_session');
                 alert("Аккаунт заблокирован! Причина: " + u.banReason + "\nЗаблокировал: " + u.bannedBy + "\nПишите на retrobook23415@inbox.ru");
             } 
-            render(); 
+            render();
+            await addAdminLog("ban_user", u.name, `Заблокирован пользователь ${u.name} по причине: ${u.banReason}`);
         } 
     };
     
@@ -676,7 +717,8 @@
             await saveUser(u);
             await loadUsers();
             render(); 
-            showMessage("Пользователь разбанен"); 
+            showMessage("Пользователь разбанен");
+            await addAdminLog("unban_user", u.name, `Разбанен пользователь ${u.name}`);
         } 
     };
     
@@ -685,7 +727,8 @@
             aboutText=text; 
             await saveSettings(aboutText, rulesText);
             render(); 
-            showMessage("О сайте обновлено"); 
+            showMessage("О сайте обновлено");
+            await addAdminLog("update_about", "Сайт", "Обновлён раздел О сайте");
         } 
     }
     
@@ -694,7 +737,8 @@
             rulesText=text; 
             await saveSettings(aboutText, rulesText);
             render(); 
-            showMessage("Правила обновлены"); 
+            showMessage("Правила обновлены");
+            await addAdminLog("update_rules", "Сайт", "Обновлены правила сайта");
         } 
     }
     
@@ -710,10 +754,15 @@
         window.history.pushState({}, '', '/');
         localStorage.setItem('rb_session', currentUserId);
         render(); 
-        showMessage("Добро пожаловать, "+u.name); 
+        showMessage("Добро пожаловать, "+u.name);
+        await addAdminLog("login", u.name, `Вход в аккаунт`);
     }
     
     function logout() { 
+        if (currentUserId) {
+            let user = getCurrentUser();
+            if (user) addAdminLog("logout", user.name, `Выход из аккаунта`);
+        }
         currentUserId=null; 
         viewingUserId=null; 
         window.history.pushState({}, '', '/');
@@ -728,6 +777,8 @@
         await saveUser({ id: newId, login, password: pass, name, isAdmin: false, verified: false, avatar: "", banned: false, banReason: "", bannedBy: "" });
         await loadUsers();
         showMessage("Регистрация успешна! Войдите.");
+        let admin = getCurrentUser();
+        if (admin && admin.isAdmin) await addAdminLog("register", name, `Зарегистрирован новый пользователь ${name}`);
     }
     
     function showRegisterModal() {
@@ -786,6 +837,7 @@
             showMessage("Данные обновлены");
             modal.remove();
             render();
+            await addAdminLog("update_account", u.name, `Обновлены данные аккаунта`);
         };
         
         document.getElementById('deleteAccountBtn').onclick = async () => {
@@ -798,6 +850,7 @@
                 await loadPosts();
                 render();
                 showMessage("Аккаунт удалён");
+                await addAdminLog("delete_account", u.name, `Удалён аккаунт ${u.name}`);
             }
         };
         document.getElementById('closeAccountModal').onclick = () => modal.remove();
@@ -913,21 +966,20 @@
         let subsBtn = document.getElementById('sidebarSubsBtn'); 
         let followersBtn = document.getElementById('sidebarFollowersBtn');
         
-        // Кнопка подписки на боковой панели (только если смотрим чужую страницу)
-        const followBtnContainer = document.getElementById('sidebarFollowBtnContainer');
+        const followContainer = document.getElementById('sidebarFollowBtnContainer');
         if(!document.getElementById('sidebarFollowBtn')) {
             const container = document.createElement('div');
             container.id = 'sidebarFollowBtnContainer';
             container.style.marginTop = '8px';
             document.getElementById('sidebarStatus').after(container);
         }
-        const followContainer = document.getElementById('sidebarFollowBtnContainer');
+        const container = document.getElementById('sidebarFollowBtnContainer');
         if(viewingUserId && viewingUserId !== currentUserId && u) {
             const isSubscribed = isFollowing(currentUserId, viewingUserId);
-            followContainer.innerHTML = `<button class="follow-btn-on-page ${isSubscribed ? 'following' : ''}" onclick="toggleFollow('${currentUserId}', '${viewingUserId}')">${isSubscribed ? 'Отписаться' : 'Подписаться'}</button>`;
-            followContainer.style.display = 'block';
+            container.innerHTML = `<button class="follow-btn-on-page ${isSubscribed ? 'following' : ''}" onclick="toggleFollow('${currentUserId}', '${viewingUserId}')">${isSubscribed ? 'Отписаться' : 'Подписаться'}</button>`;
+            container.style.display = 'block';
         } else {
-            followContainer.style.display = 'none';
+            container.style.display = 'none';
         }
         
         if(displayUser) { 
@@ -998,7 +1050,14 @@
             </div>`;
         }
         document.getElementById('adminUsers').innerHTML = us || '<div>Нет пользователей</div>';
-        document.getElementById('adminHistory').innerHTML = '<div>История сообщений в Supabase</div>';
+        
+        let logsHtml = '<div style="font-weight:bold; margin-bottom:5px;">История действий администраторов:</div>';
+        for(let log of adminLogs.slice(0, 50)) {
+            logsHtml += `<div class="admin-log-item"><b>${escapeHtml(log.adminName)}</b> [${log.date}]<br>${escapeHtml(log.action)}: ${escapeHtml(log.targetName)}<br><small>${escapeHtml(log.details)}</small></div>`;
+        }
+        if (adminLogs.length === 0) logsHtml += '<div>Нет записей в истории</div>';
+        document.getElementById('adminHistory').innerHTML = logsHtml;
+        
         let sel = document.getElementById('userSelect'); 
         if(sel) sel.innerHTML = '<option value="">Выберите</option>' + non.map(u => `<option value="${u.id}">${escapeHtml(u.name)} ${u.verified ? '(галочка есть)' : ''}</option>`).join('');
     }
