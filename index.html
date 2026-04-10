@@ -78,12 +78,11 @@
         .admin-panel { position: fixed; right: -300px; top: 55px; width: 280px; background: white; border-left: 1px solid #ccc; padding: 15px; transition: 0.25s; z-index: 200; max-height: 85vh; overflow-y: auto; }
         .admin-panel.open { right: 0; }
         .close-admin { text-align: right; font-size: 18px; cursor: pointer; }
-        .admin-user-item, .admin-log-item { background: #f6f7f9; margin: 6px 0; padding: 8px; border-radius: 3px; }
-        .ban-btn, .unban-btn, .verify-btn, .make-admin-btn { border: none; color: white; padding: 3px 8px; border-radius: 3px; cursor: pointer; font-size: 10px; margin: 2px; }
+        .admin-user-item { background: #f6f7f9; margin: 6px 0; padding: 8px; border-radius: 3px; }
+        .ban-btn, .unban-btn, .verify-btn { border: none; color: white; padding: 3px 8px; border-radius: 3px; cursor: pointer; font-size: 10px; margin: 2px; }
         .ban-btn { background: #dd3b3b; }
         .unban-btn { background: #5cb85c; }
         .verify-btn { background: #3b5998; }
-        .make-admin-btn { background: #ffb347; color: #2c2c2c; }
         .toast { position: fixed; bottom: 20px; right: 20px; background: #333; color: white; padding: 10px 20px; border-radius: 5px; z-index: 300; font-size: 12px; cursor: pointer; }
         .burger { display: none; flex-direction: column; gap: 5px; cursor: pointer; background: #2d4373; padding: 8px 12px; border-radius: 4px; }
         .burger span { width: 25px; height: 3px; background: white; }
@@ -231,7 +230,7 @@
 <div class="admin-panel" id="adminPanel">
     <div class="close-admin" id="closeAdmin">X</div>
     <h4>ПАНЕЛЬ УПРАВЛЕНИЯ</h4>
-    <div id="adminUsers"></div>
+    <div id="adminUsers">Загрузка...</div>
     <div id="adminHistory" style="margin-top:15px;"></div>
 </div>
 
@@ -266,6 +265,7 @@
     let initialized = false;
     let dataReady = false;
     let subscriptions = {};
+    let realtimeChannel = null;
 
     const loginAttempts = new Map();
     const MAX_ATTEMPTS = 5;
@@ -351,12 +351,16 @@
     
     function getUserByIdentifier(identifier) {
         if (!identifier) return null;
-        const decoded = decodeURIComponent(identifier).toLowerCase().trim();
-        return users.find(u => 
-            u.id === decoded ||
-            (u.login && u.login.toLowerCase() === decoded) ||
-            (u.name && u.name.toLowerCase() === decoded)
-        );
+        try {
+            const decoded = decodeURIComponent(identifier).toLowerCase().trim();
+            return users.find(u => 
+                u.id === decoded ||
+                (u.login && u.login.toLowerCase() === decoded) ||
+                (u.name && u.name.toLowerCase() === decoded)
+            );
+        } catch(e) {
+            return null;
+        }
     }
     
     function getUserByLogin(login) {
@@ -394,20 +398,32 @@
     };
     window.goToMain = function() { window.location.hash = ''; viewingUserId = null; currentTab = 'feed'; render(); };
 
+    window.clearPhoto = function() { 
+        selectedPhoto = null; 
+        document.getElementById('postImage').value = ''; 
+        document.getElementById('photoPreview').innerHTML = ''; 
+    };
+    
+    window.clearAudio = function() { 
+        selectedAudio = null; 
+        document.getElementById('postAudio').value = ''; 
+        document.getElementById('audioPreview').innerHTML = ''; 
+    };
+
     window.toggleLike = async function(id) { 
         let u = getCurrentUser(); 
         if(!u) { showMessage("Войдите в аккаунт"); return; } 
         let p = posts.find(x => x.id == id); 
         if(p){ 
             if(!p.likes) p.likes = [];
-            let i = p.likes.indexOf(u.id); 
+            const i = p.likes.indexOf(u.id); 
             if(i === -1) {
                 p.likes.push(u.id);
             } else {
                 p.likes.splice(i, 1);
             }
-            const { data, error } = await supabase.from('posts').upsert(p).select().single();
-            if (!error && data) {
+            const { data } = await supabase.from('posts').upsert(p).select().single();
+            if (data) {
                 const idx = posts.findIndex(x => x.id == id);
                 if (idx !== -1) posts[idx] = data;
             }
@@ -420,8 +436,12 @@
         let u = getCurrentUser(), p = posts.find(x => x.id == id); 
         if(p && u && (u.id === p.authorId || u.isAdmin)) { 
             p.deleted = true;
-            await supabase.from('posts').upsert(p);
-            posts = posts.filter(x => x.id != id); 
+            const { data } = await supabase.from('posts').upsert(p).select().single();
+            if (data) {
+                const idx = posts.findIndex(x => x.id == id);
+                if (idx !== -1) posts[idx] = data;
+            }
+            posts = posts.filter(x => !x.deleted); 
             renderFeed(); 
             showMessage("Пост удалён"); 
         } else showMessage("Нет прав для удаления"); 
@@ -566,7 +586,7 @@
     }
 
     function getFilteredPosts() { 
-        let filtered = [...posts].filter(p => !getUserById(p.authorId)?.banned && !p.deleted); 
+        let filtered = posts.filter(p => !getUserById(p.authorId)?.banned && !p.deleted); 
         if (viewingUserId) filtered = filtered.filter(p => p.authorId === viewingUserId); 
         if (currentFeedMode === 'recent') filtered.sort((a,b) => b.timestamp - a.timestamp); 
         else filtered = filtered.sort(() => Math.random() - 0.5); 
@@ -583,7 +603,7 @@
             let isLiked = cu && p.likes && p.likes.includes(cu.id); 
             let vBadge = getUserById(p.authorId)?.verified ? ' <span class="verified-icon">✔</span>' : ''; 
             let isSubscribed = cu && isFollowing(cu.id, p.authorId) && cu.id !== p.authorId;
-            html += `<div class="post" id="post_${escapeAttr(p.id)}"><div class="post-header" onclick="window.viewUserProfile('${escapeAttr(p.authorId)}')"><div class="post-avatar" style="background-image:${getAvatarUrl(p.authorId)}"></div><div><span class="post-author">${escapeHtml(p.authorName)}${vBadge}</span><span class="post-time">${formatTime(p.timestamp)}</span>${cu && cu.id !== p.authorId ? `<button class="comment-action" style="margin-left:8px;background:${isSubscribed?'#8b9dc3':'#4267b2'};color:white;border:none;padding:3px 8px;border-radius:3px;cursor:pointer;font-size:10px;" onclick="event.stopPropagation(); window.toggleFollow('${cu.id}','${p.authorId}')">${isSubscribed ? 'Отписаться' : 'Подписаться'}</button>` : ''}</div></div><div class="post-content">${linkify(applyFormatting(escapeHtml(p.text).replace(/\n/g, '<br>')))}</div>${p.photo ? `<img class="post-photo" src="${escapeAttr(p.photo)}">` : ''}<div class="post-stats"><button class="like-btn ${isLiked ? 'liked' : ''}" onclick="window.toggleLike('${escapeAttr(p.id)}')">Нравится (${p.likes?.length || 0})</button>${canDel ? `<button class="delete-btn" onclick="window.deletePost('${escapeAttr(p.id)}')">Удалить пост</button>` : ''}</div><div class="comments-section">`;
+            html += `<div class="post" id="post_${escapeAttr(p.id)}"><div class="post-header" onclick="window.viewUserProfile('${escapeAttr(p.authorId)}')"><div class="post-avatar" style="background-image:${getAvatarUrl(p.authorId)}"></div><div><span class="post-author">${escapeHtml(p.authorName)}${vBadge}</span><span class="post-time">${formatTime(p.timestamp)}</span>${cu && cu.id !== p.authorId ? `<button class="comment-action" style="margin-left:8px;background:${isSubscribed?'#8b9dc3':'#4267b2'};color:white;border:none;padding:3px 8px;border-radius:3px;cursor:pointer;font-size:10px;" onclick="event.stopPropagation(); window.toggleFollow('${cu.id}','${p.authorId}')">${isSubscribed ? 'Отписаться' : 'Подписаться'}</button>` : ''}</div></div><div class="post-content">${linkify(applyFormatting(escapeHtml(p.text).replace(/\n/g, '<br>')))}</div>${p.photo ? `<img class="post-photo" src="${escapeAttr(p.photo)}">` : ''}${p.audio ? `<div class="post-audio"><audio controls src="${escapeAttr(p.audio)}"></audio></div>` : ''}<div class="post-stats"><button class="like-btn ${isLiked ? 'liked' : ''}" onclick="window.toggleLike('${escapeAttr(p.id)}')">Нравится (${p.likes?.length || 0})</button>${canDel ? `<button class="delete-btn" onclick="window.deletePost('${escapeAttr(p.id)}')">Удалить пост</button>` : ''}</div><div class="comments-section">`;
             if (p.comments) {
                 for (let i = 0; i < p.comments.length; i++) {
                     const cmt = p.comments[i];
@@ -712,18 +732,46 @@
     async function publishPost() { 
         let u = getCurrentUser(); if(!u) { showMessage("Войдите в аккаунт", 'error'); return; } 
         let txt = document.getElementById('postText').value; 
-        if(!txt.trim()) { showMessage("Напишите текст", 'error'); return; } 
+        if(!txt.trim() && !selectedPhoto && !selectedAudio) { showMessage("Напишите текст или добавьте файл", 'error'); return; } 
         if(txt.length > 1500) { showMessage("Текст слишком длинный", 'error'); return; }
+        
+        let img64 = "", aud64 = "";
+        
+        if (selectedPhoto) {
+            img64 = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.readAsDataURL(selectedPhoto);
+            });
+        }
+        
+        if (selectedAudio) {
+            aud64 = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.readAsDataURL(selectedAudio);
+            });
+        }
+        
         let newPost = { 
             id: Date.now().toString(), authorId: u.id, authorName: u.name, 
-            verified: u.verified, timestamp: Date.now(), text: txt.trim(), 
-            photo: "", audio: "", likes: [], comments: [], deleted: false 
+            verified: u.verified, timestamp: Date.now(), text: txt.trim() || "Новый пост", 
+            photo: img64, audio: aud64, likes: [], comments: [], deleted: false 
         }; 
+        
         const { data } = await supabase.from('posts').upsert(newPost).select().single();
-        if (data) posts.unshift(data);
-        document.getElementById('postText').value = ''; 
-        renderFeed(); 
-        showMessage("Опубликовано!", 'success'); 
+        if (data) {
+            posts.unshift(data);
+            document.getElementById('postText').value = '';
+            selectedPhoto = null;
+            selectedAudio = null;
+            document.getElementById('postImage').value = '';
+            document.getElementById('postAudio').value = '';
+            document.getElementById('photoPreview').innerHTML = '';
+            document.getElementById('audioPreview').innerHTML = '';
+            renderFeed(); 
+            showMessage("Опубликовано!", 'success');
+        }
     }
 
     function getRecommendedPosts() {
@@ -775,7 +823,7 @@
                 let isLiked = cu && p.likes && p.likes.includes(cu.id);
                 let vBadge = getUserById(p.authorId)?.verified ? ' <span class="verified-icon">✔</span>' : '';
                 let isSubscribed = cu && isFollowing(cu.id, p.authorId) && cu.id !== p.authorId;
-                html += `<div class="post"><div class="post-header" onclick="window.viewUserProfile('${escapeAttr(p.authorId)}')"><div class="post-avatar" style="background-image:${getAvatarUrl(p.authorId)}"></div><div><span class="post-author">${escapeHtml(p.authorName)}${vBadge}</span><span class="post-time">${formatTime(p.timestamp)}</span>${cu && cu.id !== p.authorId ? `<button class="comment-action" style="margin-left:8px;background:${isSubscribed?'#8b9dc3':'#4267b2'};color:white;border:none;padding:3px 8px;border-radius:3px;cursor:pointer;font-size:10px;" onclick="event.stopPropagation(); window.toggleFollow('${cu.id}','${p.authorId}')">${isSubscribed ? 'Отписаться' : 'Подписаться'}</button>` : ''}</div></div><div class="post-content">${linkify(applyFormatting(escapeHtml(p.text).replace(/\n/g, '<br>')))}</div>${p.photo ? `<img class="post-photo" src="${escapeAttr(p.photo)}">` : ''}<div class="post-stats"><button class="like-btn ${isLiked ? 'liked' : ''}" onclick="window.toggleLike('${escapeAttr(p.id)}')">Нравится (${p.likes?.length || 0})</button>${canDel ? `<button class="delete-btn" onclick="window.deletePost('${escapeAttr(p.id)}')">Удалить пост</button>` : ''}</div></div>`;
+                html += `<div class="post"><div class="post-header" onclick="window.viewUserProfile('${escapeAttr(p.authorId)}')"><div class="post-avatar" style="background-image:${getAvatarUrl(p.authorId)}"></div><div><span class="post-author">${escapeHtml(p.authorName)}${vBadge}</span><span class="post-time">${formatTime(p.timestamp)}</span>${cu && cu.id !== p.authorId ? `<button class="comment-action" style="margin-left:8px;background:${isSubscribed?'#8b9dc3':'#4267b2'};color:white;border:none;padding:3px 8px;border-radius:3px;cursor:pointer;font-size:10px;" onclick="event.stopPropagation(); window.toggleFollow('${cu.id}','${p.authorId}')">${isSubscribed ? 'Отписаться' : 'Подписаться'}</button>` : ''}</div></div><div class="post-content">${linkify(applyFormatting(escapeHtml(p.text).replace(/\n/g, '<br>')))}</div>${p.photo ? `<img class="post-photo" src="${escapeAttr(p.photo)}">` : ''}${p.audio ? `<div class="post-audio"><audio controls src="${escapeAttr(p.audio)}"></audio></div>` : ''}<div class="post-stats"><button class="like-btn ${isLiked ? 'liked' : ''}" onclick="window.toggleLike('${escapeAttr(p.id)}')">Нравится (${p.likes?.length || 0})</button>${canDel ? `<button class="delete-btn" onclick="window.deletePost('${escapeAttr(p.id)}')">Удалить пост</button>` : ''}</div></div>`;
             });
         }
         
@@ -786,7 +834,7 @@
                 let isLiked = cu && p.likes && p.likes.includes(cu.id);
                 let vBadge = getUserById(p.authorId)?.verified ? ' <span class="verified-icon">✔</span>' : '';
                 let isSubscribed = cu && isFollowing(cu.id, p.authorId) && cu.id !== p.authorId;
-                html += `<div class="post"><div class="post-header" onclick="window.viewUserProfile('${escapeAttr(p.authorId)}')"><div class="post-avatar" style="background-image:${getAvatarUrl(p.authorId)}"></div><div><span class="post-author">${escapeHtml(p.authorName)}${vBadge}</span><span class="post-time">${formatTime(p.timestamp)}</span>${cu && cu.id !== p.authorId ? `<button class="comment-action" style="margin-left:8px;background:${isSubscribed?'#8b9dc3':'#4267b2'};color:white;border:none;padding:3px 8px;border-radius:3px;cursor:pointer;font-size:10px;" onclick="event.stopPropagation(); window.toggleFollow('${cu.id}','${p.authorId}')">${isSubscribed ? 'Отписаться' : 'Подписаться'}</button>` : ''}</div></div><div class="post-content">${linkify(applyFormatting(escapeHtml(p.text).replace(/\n/g, '<br>')))}</div>${p.photo ? `<img class="post-photo" src="${escapeAttr(p.photo)}">` : ''}<div class="post-stats"><button class="like-btn ${isLiked ? 'liked' : ''}" onclick="window.toggleLike('${escapeAttr(p.id)}')">Нравится (${p.likes?.length || 0})</button>${canDel ? `<button class="delete-btn" onclick="window.deletePost('${escapeAttr(p.id)}')">Удалить пост</button>` : ''}</div></div>`;
+                html += `<div class="post"><div class="post-header" onclick="window.viewUserProfile('${escapeAttr(p.authorId)}')"><div class="post-avatar" style="background-image:${getAvatarUrl(p.authorId)}"></div><div><span class="post-author">${escapeHtml(p.authorName)}${vBadge}</span><span class="post-time">${formatTime(p.timestamp)}</span>${cu && cu.id !== p.authorId ? `<button class="comment-action" style="margin-left:8px;background:${isSubscribed?'#8b9dc3':'#4267b2'};color:white;border:none;padding:3px 8px;border-radius:3px;cursor:pointer;font-size:10px;" onclick="event.stopPropagation(); window.toggleFollow('${cu.id}','${p.authorId}')">${isSubscribed ? 'Отписаться' : 'Подписаться'}</button>` : ''}</div></div><div class="post-content">${linkify(applyFormatting(escapeHtml(p.text).replace(/\n/g, '<br>')))}</div>${p.photo ? `<img class="post-photo" src="${escapeAttr(p.photo)}">` : ''}${p.audio ? `<div class="post-audio"><audio controls src="${escapeAttr(p.audio)}"></audio></div>` : ''}<div class="post-stats"><button class="like-btn ${isLiked ? 'liked' : ''}" onclick="window.toggleLike('${escapeAttr(p.id)}')">Нравится (${p.likes?.length || 0})</button>${canDel ? `<button class="delete-btn" onclick="window.deletePost('${escapeAttr(p.id)}')">Удалить пост</button>` : ''}</div></div>`;
             });
         }
         
@@ -841,7 +889,14 @@
 
     async function parseHash() {
         await waitForData();
-        const h = window.location.hash.substring(1);
+        let h = window.location.hash.substring(1);
+        
+        if (h.startsWith('/users/')) {
+            h = h.substring(1);
+            window.location.hash = h;
+            return;
+        }
+        
         if (h === 'about') { currentTab = 'about'; viewingUserId = null; }
         else if (h === 'rules') { currentTab = 'rules'; viewingUserId = null; }
         else if (h === 'recommendations') { currentTab = 'recommendations'; viewingUserId = null; }
@@ -850,10 +905,79 @@
             const identifier = h.split('/')[1]; 
             const user = getUserByIdentifier(identifier);
             if (user) viewingUserId = user.id;
-            else { showMessage(`Пользователь не найден`, 'error'); viewingUserId = null; window.location.hash = ''; }
+            else { 
+                showMessage(`Пользователь не найден`, 'error'); 
+                viewingUserId = null; 
+                window.location.hash = ''; 
+            }
         }
         else { currentTab = 'feed'; viewingUserId = null; }
         render();
+    }
+
+    window.banUser = async function() {
+        if (!isAdmin()) return;
+        const select = document.getElementById('adminUserSelect');
+        if (!select || !select.value) { showMessage("Выберите пользователя", 'error'); return; }
+        const userId = select.value;
+        const user = getUserById(userId);
+        if (user && !user.isAdmin) {
+            user.banned = true;
+            await supabase.from('users').upsert(user);
+            await loadUsers();
+            render();
+            showMessage(`${user.name} заблокирован`, 'success');
+        }
+    };
+
+    window.unbanUser = async function() {
+        if (!isAdmin()) return;
+        const select = document.getElementById('adminUserSelect');
+        if (!select || !select.value) { showMessage("Выберите пользователя", 'error'); return; }
+        const userId = select.value;
+        const user = getUserById(userId);
+        if (user) {
+            user.banned = false;
+            await supabase.from('users').upsert(user);
+            await loadUsers();
+            render();
+            showMessage(`${user.name} разблокирован`, 'success');
+        }
+    };
+
+    window.giveVerification = async function() {
+        if (!isAdmin()) return;
+        const select = document.getElementById('adminUserSelect');
+        if (!select || !select.value) { showMessage("Выберите пользователя", 'error'); return; }
+        const userId = select.value;
+        const user = getUserById(userId);
+        if (user && !user.verified) {
+            user.verified = true;
+            await supabase.from('users').upsert(user);
+            await loadUsers();
+            render();
+            showMessage(`Галочка выдана ${user.name}`, 'success');
+        }
+    };
+
+    window.removeVerification = async function() {
+        if (!isAdmin()) return;
+        const select = document.getElementById('adminUserSelect');
+        if (!select || !select.value) { showMessage("Выберите пользователя", 'error'); return; }
+        const userId = select.value;
+        const user = getUserById(userId);
+        if (user && user.verified) {
+            user.verified = false;
+            await supabase.from('users').upsert(user);
+            await loadUsers();
+            render();
+            showMessage(`Галочка удалена у ${user.name}`, 'success');
+        }
+    };
+
+    async function loadUsers() {
+        const { data } = await supabase.from('users').select('*');
+        if (data) users = data;
     }
 
     function render() { 
@@ -868,10 +992,18 @@
         else if(currentTab === 'rules') renderRules();
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelector(`.tab-btn[data-tab="${currentTab}"]`)?.classList.add('active');
+        
         if (isAdmin()) {
-            let html = '<select id="adminUserSelect" style="width:100%;margin-bottom:10px;">';
-            users.filter(u => u.id !== ADMIN_ID).forEach(u => { html += `<option value="${u.id}">${escapeHtml(u.name)} (${u.login})</option>`; });
+            let html = '<select id="adminUserSelect" style="width:100%;margin-bottom:10px;padding:5px;">';
+            html += '<option value="">Выберите пользователя</option>';
+            users.filter(u => u.id !== ADMIN_ID).forEach(u => { 
+                html += `<option value="${u.id}">${escapeHtml(u.name)} (${u.login}) ${u.banned ? '[ЗАБЛОКИРОВАН]' : ''} ${u.verified ? '✓' : ''}</option>`; 
+            });
             html += '</select>';
+            html += '<button onclick="window.giveVerification()" class="verify-btn">Выдать галочку</button>';
+            html += '<button onclick="window.removeVerification()" class="verify-btn" style="background:#8b9dc3;">Удалить галочку</button>';
+            html += '<button onclick="window.banUser()" class="ban-btn">Заблокировать</button>';
+            html += '<button onclick="window.unbanUser()" class="unban-btn">Разбанить</button>';
             document.getElementById('adminUsers').innerHTML = html;
         } else {
             document.getElementById('adminUsers').innerHTML = 'Доступно админу';
@@ -1039,11 +1171,69 @@
         }
     }
 
+    function setupRealtime() {
+        if (realtimeChannel) realtimeChannel.unsubscribe();
+        
+        realtimeChannel = supabase
+            .channel('public:posts')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, async (payload) => {
+                if (payload.eventType === 'INSERT') {
+                    const newPost = payload.new;
+                    if (!newPost.deleted) {
+                        const exists = posts.find(p => p.id === newPost.id);
+                        if (!exists) {
+                            posts.unshift(newPost);
+                            if (currentTab === 'feed') renderFeed();
+                            else if (currentTab === 'recommendations') renderRecommendations();
+                        }
+                    }
+                } else if (payload.eventType === 'UPDATE') {
+                    const updatedPost = payload.new;
+                    const idx = posts.findIndex(p => p.id === updatedPost.id);
+                    if (idx !== -1) {
+                        if (updatedPost.deleted) {
+                            posts.splice(idx, 1);
+                        } else {
+                            posts[idx] = updatedPost;
+                        }
+                    } else if (!updatedPost.deleted) {
+                        posts.unshift(updatedPost);
+                    }
+                    if (currentTab === 'feed') renderFeed();
+                    else if (currentTab === 'recommendations') renderRecommendations();
+                } else if (payload.eventType === 'DELETE') {
+                    const deletedPost = payload.old;
+                    posts = posts.filter(p => p.id !== deletedPost.id);
+                    if (currentTab === 'feed') renderFeed();
+                    else if (currentTab === 'recommendations') renderRecommendations();
+                }
+            })
+            .subscribe();
+    }
+
     async function init() {
         if (initialized) return;
         initialized = true;
         
+        if (window.location.hash.startsWith('#/users/')) {
+            window.location.hash = window.location.hash.replace('#/users/', '#users/');
+        }
+        
         document.getElementById('feedContainer').innerHTML = '<div class="loading-indicator">Загрузка...</div>';
+        
+        document.getElementById('postImage').addEventListener('change', (e) => {
+            if (e.target.files[0]) {
+                selectedPhoto = e.target.files[0];
+                document.getElementById('photoPreview').innerHTML = `Файл выбран <button class="remove-file-btn" onclick="window.clearPhoto()">Удалить</button>`;
+            }
+        });
+        
+        document.getElementById('postAudio').addEventListener('change', (e) => {
+            if (e.target.files[0]) {
+                selectedAudio = e.target.files[0];
+                document.getElementById('audioPreview').innerHTML = `Файл выбран <button class="remove-file-btn" onclick="window.clearAudio()">Удалить</button>`;
+            }
+        });
         
         const [usersRes, postsRes, subsRes] = await Promise.all([
             supabase.from('users').select('*'),
@@ -1067,6 +1257,8 @@
         dataReady = true;
         const saved = localStorage.getItem('rb_session');
         if (saved && users.find(u => u.id === saved && !u.banned)) currentUserId = saved;
+        
+        setupRealtime();
         
         window.addEventListener('hashchange', parseHash);
         
