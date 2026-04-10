@@ -745,17 +745,41 @@
         c.style.borderRadius = '3px';
         const u = getCurrentUser();
         if (!u) { c.innerHTML = '<div style="text-align:center;padding:20px;">Войдите, чтобы увидеть рекомендации</div>'; return; }
+        
         const rec = getRecommendedPosts();
-        if (!rec.length) { c.innerHTML = '<h3 style="margin-bottom:15px;">Рекомендовано для вас</h3><div style="text-align:center;padding:20px;">Пока нет рекомендаций.</div>'; return; }
         const cu = getCurrentUser();
+        
+        const regularPosts = posts
+            .filter(p => !getUserById(p.authorId)?.banned && !p.deleted && p.authorId !== cu.id)
+            .filter(p => !rec.some(r => r.id === p.id))
+            .sort((a, b) => b.timestamp - a.timestamp)
+            .slice(0, 20);
+        
         let html = '<h3 style="margin-bottom:15px;">Рекомендовано для вас</h3>';
-        rec.forEach(p => {
-            let canDel = cu && (cu.id === p.authorId || cu.isAdmin);
-            let isLiked = cu && p.likes && p.likes.includes(cu.id);
-            let vBadge = getUserById(p.authorId)?.verified ? ' <span class="verified-icon">✔</span>' : '';
-            let isSubscribed = cu && isFollowing(cu.id, p.authorId) && cu.id !== p.authorId;
-            html += `<div class="post"><div class="post-header" onclick="window.viewUserProfile('${escapeAttr(p.authorId)}')"><div class="post-avatar" style="background-image:${getAvatarUrl(p.authorId)}"></div><div><span class="post-author">${escapeHtml(p.authorName)}${vBadge}</span><span class="post-time">${formatTime(p.timestamp)}</span>${cu && cu.id !== p.authorId ? `<button class="comment-action" style="margin-left:8px;background:${isSubscribed?'#8b9dc3':'#4267b2'};color:white;border:none;padding:3px 8px;border-radius:3px;cursor:pointer;font-size:10px;" onclick="event.stopPropagation(); window.toggleFollow('${cu.id}','${p.authorId}')">${isSubscribed ? 'Отписаться' : 'Подписаться'}</button>` : ''}</div></div><div class="post-content">${linkify(applyFormatting(escapeHtml(p.text).replace(/\n/g, '<br>')))}</div>${p.photo ? `<img class="post-photo" src="${escapeAttr(p.photo)}">` : ''}<div class="post-stats"><button class="like-btn ${isLiked ? 'liked' : ''}" onclick="window.toggleLike('${escapeAttr(p.id)}')">Нравится (${p.likes?.length || 0})</button>${canDel ? `<button class="delete-btn" onclick="window.deletePost('${escapeAttr(p.id)}')">Удалить пост</button>` : ''}</div></div>`;
-        });
+        
+        if (rec.length === 0) {
+            html += '<div style="text-align:center;padding:20px;">Пока нет рекомендаций. Подпишитесь на пользователей или лайкните несколько постов!</div>';
+        } else {
+            rec.forEach(p => {
+                let canDel = cu && (cu.id === p.authorId || cu.isAdmin);
+                let isLiked = cu && p.likes && p.likes.includes(cu.id);
+                let vBadge = getUserById(p.authorId)?.verified ? ' <span class="verified-icon">✔</span>' : '';
+                let isSubscribed = cu && isFollowing(cu.id, p.authorId) && cu.id !== p.authorId;
+                html += `<div class="post"><div class="post-header" onclick="window.viewUserProfile('${escapeAttr(p.authorId)}')"><div class="post-avatar" style="background-image:${getAvatarUrl(p.authorId)}"></div><div><span class="post-author">${escapeHtml(p.authorName)}${vBadge}</span><span class="post-time">${formatTime(p.timestamp)}</span>${cu && cu.id !== p.authorId ? `<button class="comment-action" style="margin-left:8px;background:${isSubscribed?'#8b9dc3':'#4267b2'};color:white;border:none;padding:3px 8px;border-radius:3px;cursor:pointer;font-size:10px;" onclick="event.stopPropagation(); window.toggleFollow('${cu.id}','${p.authorId}')">${isSubscribed ? 'Отписаться' : 'Подписаться'}</button>` : ''}</div></div><div class="post-content">${linkify(applyFormatting(escapeHtml(p.text).replace(/\n/g, '<br>')))}</div>${p.photo ? `<img class="post-photo" src="${escapeAttr(p.photo)}">` : ''}<div class="post-stats"><button class="like-btn ${isLiked ? 'liked' : ''}" onclick="window.toggleLike('${escapeAttr(p.id)}')">Нравится (${p.likes?.length || 0})</button>${canDel ? `<button class="delete-btn" onclick="window.deletePost('${escapeAttr(p.id)}')">Удалить пост</button>` : ''}</div></div>`;
+            });
+        }
+        
+        if (regularPosts.length > 0) {
+            html += '<h3 style="margin:25px 0 15px;">Другие пользователи</h3>';
+            regularPosts.forEach(p => {
+                let canDel = cu && (cu.id === p.authorId || cu.isAdmin);
+                let isLiked = cu && p.likes && p.likes.includes(cu.id);
+                let vBadge = getUserById(p.authorId)?.verified ? ' <span class="verified-icon">✔</span>' : '';
+                let isSubscribed = cu && isFollowing(cu.id, p.authorId) && cu.id !== p.authorId;
+                html += `<div class="post"><div class="post-header" onclick="window.viewUserProfile('${escapeAttr(p.authorId)}')"><div class="post-avatar" style="background-image:${getAvatarUrl(p.authorId)}"></div><div><span class="post-author">${escapeHtml(p.authorName)}${vBadge}</span><span class="post-time">${formatTime(p.timestamp)}</span>${cu && cu.id !== p.authorId ? `<button class="comment-action" style="margin-left:8px;background:${isSubscribed?'#8b9dc3':'#4267b2'};color:white;border:none;padding:3px 8px;border-radius:3px;cursor:pointer;font-size:10px;" onclick="event.stopPropagation(); window.toggleFollow('${cu.id}','${p.authorId}')">${isSubscribed ? 'Отписаться' : 'Подписаться'}</button>` : ''}</div></div><div class="post-content">${linkify(applyFormatting(escapeHtml(p.text).replace(/\n/g, '<br>')))}</div>${p.photo ? `<img class="post-photo" src="${escapeAttr(p.photo)}">` : ''}<div class="post-stats"><button class="like-btn ${isLiked ? 'liked' : ''}" onclick="window.toggleLike('${escapeAttr(p.id)}')">Нравится (${p.likes?.length || 0})</button>${canDel ? `<button class="delete-btn" onclick="window.deletePost('${escapeAttr(p.id)}')">Удалить пост</button>` : ''}</div></div>`;
+            });
+        }
+        
         c.innerHTML = html;
     }
 
