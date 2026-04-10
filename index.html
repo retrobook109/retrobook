@@ -349,6 +349,16 @@
     function getCurrentUser() { return users.find(u=>u.id===currentUserId); }
     function getUserById(id) { return users.find(u=>u.id===id); }
     
+    function getUserByIdentifier(identifier) {
+        if (!identifier) return null;
+        const decoded = decodeURIComponent(identifier).toLowerCase().trim();
+        return users.find(u => 
+            u.id === decoded ||
+            (u.login && u.login.toLowerCase() === decoded) ||
+            (u.name && u.name.toLowerCase() === decoded)
+        );
+    }
+    
     function getUserByLogin(login) {
         if (!login) return null;
         const lowerLogin = decodeURIComponent(login).toLowerCase().trim();
@@ -837,10 +847,10 @@
         else if (h === 'recommendations') { currentTab = 'recommendations'; viewingUserId = null; }
         else if (h.startsWith('users/')) { 
             currentTab = 'feed'; 
-            const login = decodeURIComponent(h.split('/')[1]); 
-            const user = getUserByLogin(login);
+            const identifier = h.split('/')[1]; 
+            const user = getUserByIdentifier(identifier);
             if (user) viewingUserId = user.id;
-            else { showMessage(`Пользователь @${escapeHtml(login)} не найден`, 'error'); viewingUserId = null; window.location.hash = ''; }
+            else { showMessage(`Пользователь не найден`, 'error'); viewingUserId = null; window.location.hash = ''; }
         }
         else { currentTab = 'feed'; viewingUserId = null; }
         render();
