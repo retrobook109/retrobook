@@ -260,7 +260,6 @@
     let displayedPostsCount = 10;
     const POSTS_PER_PAGE = 10;
     let maintenanceMode = false;
-    let sessionCheckInterval = null;
 
     function escapeAttr(s) { 
         if (s == null) return ''; 
@@ -378,22 +377,6 @@
             const token = generateSessionToken();
             const hashedToken = await hashSessionToken(token);
             
-            const { data: existingSessions } = await supabase
-                .from('user_sessions')
-                .select('*')
-                .eq('user_id', userId)
-                .eq('is_active', true);
-            
-            if (existingSessions && existingSessions.length >= 5) {
-                const sessionsToDelete = existingSessions
-                    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
-                    .slice(0, existingSessions.length - 4);
-                
-                for (const session of sessionsToDelete) {
-                    await supabase.from('user_sessions').update({ is_active: false }).eq('id', session.id);
-                }
-            }
-            
             await supabase.from('user_sessions').insert({
                 user_id: userId,
                 token_hash: hashedToken,
@@ -467,19 +450,6 @@
                 .eq('is_active', true);
         } catch (error) {
             console.error('End all sessions error:', error);
-        }
-    }
-    
-    async function checkSession() {
-        if (!currentUserId || !currentSessionToken) return;
-        
-        const isValid = await validateSession(currentUserId, currentSessionToken);
-        if (!isValid) {
-            currentUserId = null;
-            currentSessionToken = null;
-            localStorage.removeItem('rb_session');
-            render();
-            showMessage('Сессия истекла. Пожалуйста, войдите снова.', 'error');
         }
     }
 
@@ -698,11 +668,6 @@
         viewingUserId = null; 
         window.location.hash = ''; 
         localStorage.removeItem('rb_session');
-        
-        if (sessionCheckInterval) {
-            clearInterval(sessionCheckInterval);
-            sessionCheckInterval = null;
-        }
         
         render(); 
         showMessage("Вы вышли из аккаунта", 'info');
@@ -1380,29 +1345,9 @@
             if (initialized) return;
             initialized = true;
             
-            await loadSettings();
+            document.getElementById('globalLoading').style.display = 'flex';
             
-            if (maintenanceMode) {
-                const saved = localStorage.getItem('rb_session');
-                if (saved) {
-                    try {
-                        const sessionData = JSON.parse(saved);
-                        const { data } = await supabase.from('users').select('*');
-                        if (data) users = data;
-                        const u = users.find(user => user.id === sessionData.userId);
-                        if (!u || !u.isAdmin) {
-                            showMaintenanceScreen();
-                            return;
-                        }
-                    } catch (e) {
-                        showMaintenanceScreen();
-                        return;
-                    }
-                } else {
-                    showMaintenanceScreen();
-                    return;
-                }
-            }
+            await loadSettings();
             
             const [usersRes, postsRes, subsRes] = await Promise.all([
                 supabase.from('users').select('*'),
@@ -1416,6 +1361,31 @@
             if (subsRes.data) { 
                 subscriptions = {}; 
                 subsRes.data.forEach(item => { subscriptions[item.userId] = item.following || []; }); 
+            }
+            
+            if (maintenanceMode) {
+                const saved = localStorage.getItem('rb_session');
+                let isAdminUser = false;
+                
+                if (saved) {
+                    try {
+                        const sessionData = JSON.parse(saved);
+                        const u = users.find(user => user.id === sessionData.userId);
+                        if (u && u.isAdmin) {
+                            const isValid = await validateSession(sessionData.userId, sessionData.token);
+                            if (isValid) {
+                                isAdminUser = true;
+                                currentUserId = sessionData.userId;
+                                currentSessionToken = sessionData.token;
+                            }
+                        }
+                    } catch (e) {}
+                }
+                
+                if (!isAdminUser) {
+                    showMaintenanceScreen();
+                    return;
+                }
             }
             
             const existingAdmin = users.find(u => u.id === ADMIN_ID);
@@ -1453,29 +1423,29 @@
                 posts.push(welcomePost);
             }
             
-            const saved = localStorage.getItem('rb_session');
-            if (saved) {
-                try {
-                    const sessionData = JSON.parse(saved);
-                    const isValid = await validateSession(sessionData.userId, sessionData.token);
-                    
-                    if (isValid) {
-                        const user = users.find(u => u.id === sessionData.userId && !u.banned);
-                        if (user) {
-                            currentUserId = sessionData.userId;
-                            currentSessionToken = sessionData.token;
+            if (!currentUserId) {
+                const saved = localStorage.getItem('rb_session');
+                if (saved) {
+                    try {
+                        const sessionData = JSON.parse(saved);
+                        const isValid = await validateSession(sessionData.userId, sessionData.token);
+                        
+                        if (isValid) {
+                            const user = users.find(u => u.id === sessionData.userId && !u.banned);
+                            if (user) {
+                                currentUserId = sessionData.userId;
+                                currentSessionToken = sessionData.token;
+                            } else {
+                                localStorage.removeItem('rb_session');
+                            }
                         } else {
                             localStorage.removeItem('rb_session');
                         }
-                    } else {
+                    } catch (e) {
                         localStorage.removeItem('rb_session');
                     }
-                } catch (e) {
-                    localStorage.removeItem('rb_session');
                 }
             }
-            
-            sessionCheckInterval = setInterval(checkSession, 60000);
             
             window.addEventListener('hashchange', parseHash);
             
