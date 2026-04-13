@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://wewawkaudkafjhlmxert.supabase.co; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://esm.sh; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' data: blob:; connect-src 'self' https://wewawkaudkafjhlmxert.supabase.co wss://wewawkaudkafjhlmxert.supabase.co https://esm.sh; base-uri 'self'; form-action 'self';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://wewawkaudkafjhlmxert.supabase.co; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://esm.sh; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' data: blob:; connect-src 'self' https://wewawkaudkafjhlmxert.supabase.co wss://wewawkaudkafjhlmxert.supabase.co https://esm.sh; frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta name="format-detection" content="telephone=no">
     <title>RetroBook</title>
     <link rel="icon" href="logobook.png" type="image/png">
     <link rel="preconnect" href="https://wewawkaudkafjhlmxert.supabase.co">
@@ -24,7 +29,10 @@
         .tab-btn.active { background: #ffb347; color: #2c2c2c; }
         .auth-area { display: flex; gap: 6px; background: #2d4373; padding: 4px 8px; border-radius: 4px; }
         .auth-input { padding: 3px 6px; border-radius: 3px; border: none; font-size: 10px; width: 85px; }
-        .auth-btn { background: #5b74a8; color: white; border: none; padding: 3px 8px; border-radius: 3px; cursor: pointer; font-size: 10px; font-weight: bold; }
+        .auth-btn { background: #5b74a8; color: white; border: none; padding: 3px 8px; border-radius: 3px; cursor: pointer; font-size: 10px; font-weight: bold; transition: opacity 0.2s; }
+        .auth-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .logout-all-btn { background: #dd3b3b; color: white; border: none; padding: 3px 8px; border-radius: 3px; cursor: pointer; font-size: 10px; font-weight: bold; margin-left: 4px; transition: opacity 0.2s; }
+        .logout-all-btn:hover { background: #c62828; }
         .user-info { display: flex; align-items: center; gap: 8px; background: #2d4373; padding: 4px 10px; border-radius: 20px; color: white; font-size: 11px; }
         .main { display: flex; gap: 20px; margin-top: 10px; padding-top: 0; }
         .sidebar { width: 200px; background: white; border: 1px solid #bdc7d8; border-radius: 3px; padding: 12px; text-align: center; position: sticky; top: 75px; align-self: flex-start; }
@@ -45,6 +53,7 @@
         .file-preview { display: inline-block; margin-left: 8px; font-size: 11px; color: #666; }
         .remove-file-btn { background: #dd3b3b; color: white; border: none; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-size: 10px; margin-left: 5px; }
         .post-btn { background: #4267b2; color: white; border: none; padding: 6px 12px; border-radius: 3px; cursor: pointer; font-weight: bold; margin-top: 5px; }
+        .post-btn:disabled { opacity: 0.7; cursor: wait; }
         .feed-tabs { display: flex; gap: 5px; margin-bottom: 10px; }
         .feed-tab-btn { background: #e9eaed; border: 1px solid #bdc7d8; padding: 4px 10px; border-radius: 3px; cursor: pointer; font-size: 11px; }
         .feed-tab-btn.active { background: #4267b2; color: white; }
@@ -91,6 +100,7 @@
         .mobile-tabs { display: flex; flex-direction: column; gap: 8px; margin: 15px 0; }
         .mobile-tab-btn { background: #5b74a8; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 5px; font-size: 12px; text-align: center; }
         .mobile-link-btn { background: #4267b2; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 5px; font-size: 12px; text-align: center; text-decoration: none; display: block; margin-top: 8px; }
+        .mobile-logout-all-btn { background: #dd3b3b; color: white; border: none; padding: 10px; cursor: pointer; border-radius: 5px; font-size: 12px; text-align: center; margin-top: 8px; }
         .global-loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #e9eaed; display: flex; align-items: center; justify-content: center; z-index: 10000; font-size: 18px; color: #3b5998; }
         .load-more-btn { display: block; width: 100%; padding: 10px; margin: 10px 0; background: #4267b2; color: white; border: none; border-radius: 3px; cursor: pointer; font-weight: bold; text-align: center; }
         .account-btn, .followers-btn { background: #5b74a8; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 11px; margin-top: 8px; width: 100%; }
@@ -109,7 +119,7 @@
         .maintenance-message { text-align: center; padding: 50px; background: white; border-radius: 8px; margin: 50px auto; max-width: 500px; }
         .maintenance-message h1 { color: #3b5998; margin-bottom: 20px; }
         .maintenance-message p { color: #666; margin-bottom: 10px; }
-        .security-warning { background: #fff3cd; border: 1px solid #ffc107; color: #856404; padding: 10px; border-radius: 5px; margin: 10px 0; font-size: 11px; }
+        .honeypot { position: absolute; left: -9999px; top: -9999px; opacity: 0; }
         @media (max-width: 750px) { 
             .sidebar { display: none; } 
             .burger { display: flex; } 
@@ -118,6 +128,7 @@
             .right-group { gap: 5px; }
             .auth-input { width: 70px; font-size: 9px; padding: 3px 5px; }
             .auth-btn { padding: 3px 6px; font-size: 9px; }
+            .logout-all-btn { padding: 3px 6px; font-size: 9px; }
         }
     </style>
 </head>
@@ -126,7 +137,7 @@
 
 <div class="header">
     <div class="header-inner">
-        <div class="logo" onclick="window.goToMain()">
+        <div class="logo" id="mainLogoBtn">
             <img class="logo-img" id="logoImg" alt="RetroBook" src="mainbook.png" style="height:26px;">
         </div>
         <div class="burger" id="burgerBtn"><span></span><span></span><span></span></div>
@@ -163,6 +174,7 @@
     <button id="mobileFollowersBtn" class="followers-btn" style="display:none;">ПОДПИСЧИКИ</button>
     <button id="mobileAccountBtn" class="account-btn" style="display:none;">АККАУНТ</button>
     <button id="mobileBackBtn" class="back-btn" style="width:100%; margin-top:10px; display:none;">НА ГЛАВНУЮ</button>
+    <button id="mobileLogoutAllBtn" class="mobile-logout-all-btn" style="display:none;">ВЫЙТИ СО ВСЕХ УСТРОЙСТВ</button>
 </div>
 
 <div class="container">
@@ -176,6 +188,7 @@
             <button id="sidebarFollowersBtn" class="followers-btn" style="display:none;">ПОДПИСЧИКИ</button>
             <button id="sidebarAccountBtn" class="account-btn" style="display:none;">АККАУНТ</button>
             <button id="sidebarBackBtn" class="back-btn" style="width:100%; margin-top:8px; display:none;">НА ГЛАВНУЮ</button>
+            <button id="sidebarLogoutAllBtn" class="logout-all-btn" style="width:100%; margin-top:8px; display:none; background:#dd3b3b; padding:5px 10px;">ВЫЙТИ СО ВСЕХ УСТРОЙСТВ</button>
         </div>
         <div class="feed">
             <div id="postArea" style="display:none;" class="post-area">
@@ -188,11 +201,11 @@
                 <textarea id="postText" class="post-input" rows="2" placeholder="Что нового? Напишите @username для отметки (макс. 1500 символов)" maxlength="1500"></textarea>
                 <div class="char-counter" id="charCounter">0 / 1500</div>
                 <div>
-                    <label class="file-label">Фото (до 5 МБ) <input type="file" id="postImage" class="file-input" accept="image/*"></label>
+                    <label class="file-label">Фото (до 5 МБ) <input type="file" id="postImage" class="file-input" accept="image/jpeg,image/png,image/gif,image/webp"></label>
                     <span id="photoPreview" class="file-preview"></span>
                 </div>
                 <div>
-                    <label class="file-label">Музыка MP3 (до 10 МБ) <input type="file" id="postAudio" class="file-input" accept="audio/mpeg,.mp3"></label>
+                    <label class="file-label">Музыка MP3 (до 10 МБ) <input type="file" id="postAudio" class="file-input" accept="audio/mpeg,audio/mp3"></label>
                     <span id="audioPreview" class="file-preview"></span>
                 </div>
                 <button id="publishBtn" class="post-btn">Опубликовать</button>
@@ -208,296 +221,414 @@
     </div>
 </div>
 
+<div class="honeypot">
+    <input type="text" id="hp_field" tabindex="-1" autocomplete="off" aria-hidden="true">
+</div>
+
 <script type="module">
     import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
     
     const supabaseUrl = 'https://wewawkaudkafjhlmxert.supabase.co';
     const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indld2F3a2F1ZGthZmpobG14ZXJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NzE3NTIsImV4cCI6MjA5MTI0Nzc1Mn0.s4G6w5EplKkv3ZnvP_RAgJGmHPuWWv4bIwsockQ_CiQ';
-    
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     
-    async function hashPassword(p) { 
-        const e = new TextEncoder(); 
-        const d = e.encode(p + 'retrobook_salt_2024'); 
-        const h = await crypto.subtle.digest('SHA-256', d); 
-        return Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2, '0')).join(''); 
+    const SECURITY = {
+        MAX_LOGIN_ATTEMPTS: 5,
+        LOCKOUT_TIME: 1800000,
+        MAX_POST_LENGTH: 1500,
+        MAX_COMMENT_LENGTH: 500,
+        MAX_NAME_LENGTH: 50,
+        MIN_PASSWORD_LENGTH: 8,
+        PASSWORD_ITERATIONS: 150000,
+        MAX_FILE_SIZE_PHOTO: 5242880,
+        MAX_FILE_SIZE_AUDIO: 10485760,
+        ALLOWED_IMAGE_TYPES: ['image/jpeg','image/png','image/gif','image/webp'],
+        ALLOWED_AUDIO_TYPES: ['audio/mpeg','audio/mp3'],
+        SESSION_TIMEOUT: 2592000000,
+        RATE_LIMIT_POSTS: 5,
+        RATE_LIMIT_COMMENTS: 10,
+        RATE_LIMIT_WINDOW: 60000,
+        SALT: 'retrobook_secure_salt_2025_v4_x9Fg2LpQ8Z',
+        getFingerprint: () => {
+            const nav = window.navigator;
+            const screen = window.screen;
+            return btoa(`${nav.userAgent}${nav.language}${screen.colorDepth}${screen.width}${screen.height}${new Date().getTimezoneOffset()}`);
+        }
+    };
+    
+    const loginAttempts = new Map();
+    const rateLimits = new Map();
+    let isPublishing = false;
+    
+    async function hashPassword(password) {
+        const encoder = new TextEncoder();
+        const saltData = encoder.encode(SECURITY.SALT + SECURITY.getFingerprint().substring(0, 16));
+        const keyMaterial = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveBits']);
+        const derivedBits = await crypto.subtle.deriveBits(
+            { name: 'PBKDF2', salt: saltData, iterations: SECURITY.PASSWORD_ITERATIONS, hash: 'SHA-256' },
+            keyMaterial,
+            256
+        );
+        return Array.from(new Uint8Array(derivedBits)).map(b => b.toString(16).padStart(2, '0')).join('');
     }
     
-    async function verifyPassword(p, h) { 
-        const hashedInput = await hashPassword(p);
-        return hashedInput === h; 
+    async function verifyPassword(input, storedHash) {
+        const inputHash = await hashPassword(input);
+        if (inputHash.length !== storedHash.length) return false;
+        let diff = 0;
+        for (let i = 0; i < inputHash.length; i++) diff |= inputHash.charCodeAt(i) ^ storedHash.charCodeAt(i);
+        return diff === 0;
     }
-
-    let users = [];
-    let posts = [];
-    let currentUserId = null;
-    let currentSessionId = null;
-    let viewingUserId = null;
-    let currentTab = 'feed';
-    let currentFeedMode = 'recent';
+    
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]);
+    }
+    function escapeAttr(str) {
+        return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
+    }
+    function sanitizeInput(str, maxLen) {
+        if (!str) return '';
+        return str.substring(0, maxLen).replace(/[^\w\s\u0430-\u044F\u0410-\u042F\u0451\u0401.,!?@:;()\-\[\] ]/g, '');
+    }
+    
+    let users = [], posts = [], currentUserId = null, viewingUserId = null;
+    let currentTab = 'feed', currentFeedMode = 'recent';
     let aboutText = "Добро пожаловать в RetroBook! Социальная сеть в стиле 2011 года.";
     let rulesText = "1. Уважайте других.\n2. Запрещён спам.\n3. Будьте вежливы.";
-    const ADMIN_ID = "admin";
-    const ADMIN_LOGIN = "RetroBook";
-    const ADMIN_PASSWORD = "admin";
-    let selectedPhoto = null;
-    let selectedAudio = null;
-    let initialized = false;
-    let subscriptions = {};
-    let displayedPostsCount = 10;
+    const ADMIN_ID = "admin", ADMIN_LOGIN = "RetroBook", ADMIN_PASSWORD = "admin";
+    let selectedPhoto = null, selectedAudio = null, initialized = false;
+    let subscriptions = {}, displayedPostsCount = 10;
     const POSTS_PER_PAGE = 10;
     let maintenanceMode = false;
-
-    function escapeAttr(s) { 
-        if (s == null) return ''; 
-        return String(s).replace(/'/g, "\\'").replace(/"/g, '&quot;'); 
+    
+    function showMessage(msg, type) {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = msg;
+        toast.style.background = type === 'error' ? '#dd3b3b' : type === 'success' ? '#4caf50' : '#333';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
     }
     
-    function escapeHtml(s) { 
-        if (!s) return ''; 
-        return String(s).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]); 
+    function checkRateLimit(userId, action) {
+        const key = userId + '_' + action;
+        const now = Date.now();
+        const limit = action === 'POSTS' ? SECURITY.RATE_LIMIT_POSTS : SECURITY.RATE_LIMIT_COMMENTS;
+        if (!rateLimits.has(key)) { rateLimits.set(key, { count: 1, first: now }); return true; }
+        const rec = rateLimits.get(key);
+        if (now - rec.first > SECURITY.RATE_LIMIT_WINDOW) { rateLimits.set(key, { count: 1, first: now }); return true; }
+        rec.count++;
+        return rec.count <= limit;
     }
     
-    function showMessage(msg, type) { 
-        const t = document.createElement('div'); 
-        t.className = 'toast'; 
-        t.textContent = msg; 
-        t.style.background = type === 'error' ? '#dd3b3b' : type === 'success' ? '#4caf50' : '#333'; 
-        document.body.appendChild(t); 
-        setTimeout(() => t.remove(), 3000); 
-    }
-    
-    function showMaintenanceScreen() {
-        document.getElementById('globalLoading').style.display = 'none';
-        const header = document.querySelector('.header');
-        const container = document.querySelector('.container');
-        const mobileSidebar = document.querySelector('.mobile-sidebar');
-        const mobileOverlay = document.querySelector('.mobile-overlay');
-        if (header) header.style.display = 'none';
-        if (container) container.style.display = 'none';
-        if (mobileSidebar) mobileSidebar.style.display = 'none';
-        if (mobileOverlay) mobileOverlay.style.display = 'none';
-        
-        const maintenanceDiv = document.createElement('div');
-        maintenanceDiv.className = 'maintenance-message';
-        maintenanceDiv.innerHTML = '<h1>Сайт временно не работает</h1><p>Проводятся технические работы.</p><p>Пожалуйста, зайдите позже.</p><p style="margin-top: 30px; font-size: 11px; color: #999;">RetroBook 2024</p>';
-        document.body.appendChild(maintenanceDiv);
-    }
-    
-    function applyFormatting(text) {
-        let result = text;
-        result = result.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-        result = result.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
-        result = result.replace(/__([^_]+)__/g, '<u>$1</u>');
-        result = result.replace(/~~([^~]+)~~/g, '<s>$1</s>');
-        return result;
-    }
-    
-    function linkify(text) { 
-        const urlRegex = /(https?:\/\/[^\s<>]+)/g;
-        return text.replace(urlRegex, (url) => {
-            try {
-                const parsed = new URL(url);
-                if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
-                    return '<a href="' + escapeHtml(url) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(url) + '</a>';
-                }
-            } catch (e) {}
-            return escapeHtml(url);
+    async function validateFileMagicBytes(file, expectedType) {
+        return new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onloadend = e => {
+                const arr = new Uint8Array(e.target.result).subarray(0, 4);
+                let header = '';
+                for (let b of arr) header += b.toString(16).padStart(2, '0');
+                if (expectedType === 'image') {
+                    resolve(header.startsWith('ffd8ff') || header.startsWith('89504e47') || header.startsWith('47494638') || header.startsWith('52494646'));
+                } else if (expectedType === 'audio') {
+                    resolve(header.startsWith('494433') || header.startsWith('fffb') || header.startsWith('fff3'));
+                } else resolve(false);
+            };
+            reader.readAsArrayBuffer(file.slice(0, 4));
         });
-    }
-    
-    function processPostText(text) {
-        if (!text) return '';
-        
-        let processed = escapeHtml(text);
-        processed = processed.replace(/\n/g, '<br>');
-        processed = applyFormatting(processed);
-        processed = linkify(processed);
-        
-        const tempMap = new Map();
-        let counter = 0;
-        processed = processed.replace(/<[^>]+>/g, (match) => {
-            const key = '__TEMP_' + (counter++) + '__';
-            tempMap.set(key, match);
-            return key;
-        });
-        
-        const mentionRegex = /@([a-zA-Z0-9\u0430-\u044F\u0410-\u042F\u0451\u0401_-]+)/g;
-        processed = processed.replace(mentionRegex, (match, username) => {
-            const user = users.find(u => u.login && u.login.toLowerCase() === username.toLowerCase());
-            if (user && !user.banned) {
-                return '<span class="mention" onclick="window.viewUserProfile(\'' + escapeAttr(user.id) + '\')">@' + escapeHtml(username) + '</span>';
-            }
-            return '@' + escapeHtml(username);
-        });
-        
-        tempMap.forEach((value, key) => {
-            processed = processed.replace(key, value);
-        });
-        
-        return processed;
-    }
-    
-    function formatTime(timestamp) { 
-        const diff = Math.floor((Date.now() - timestamp) / 1000); 
-        if (diff < 60) return "только что"; 
-        if (diff < 3600) return Math.floor(diff / 60) + " мин назад"; 
-        if (diff < 86400) return Math.floor(diff / 3600) + " ч назад"; 
-        return Math.floor(diff / 86400) + " дн назад"; 
     }
     
     function getCurrentUser() { return users.find(u => u.id === currentUserId); }
     function getUserById(id) { return users.find(u => u.id === id); }
     function getUserByLogin(login) { return users.find(u => u.login && u.login.toLowerCase() === login.toLowerCase()); }
     function isAdmin() { const u = getCurrentUser(); return u && u.isAdmin; }
-    
-    function getAvatarUrl(id) { 
-        const u = getUserById(id); 
-        if (u && u.avatar && u.avatar.startsWith('data:image/')) {
-            return "url('" + u.avatar + "')";
-        }
+    function getAvatarUrl(id) {
+        const u = getUserById(id);
+        if (u && u.avatar && u.avatar.startsWith('data:image/')) return `url('${escapeAttr(u.avatar)}')`;
         return "url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Cpath fill=%22%23899ab6%22 d=%22M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z%22/%3E%3C/svg%3E')";
     }
+    
+    function isFollowing(a, b) { return subscriptions[a] && subscriptions[a].includes(b); }
+    function getFollowedCount(id) { return subscriptions[id] ? subscriptions[id].length : 0; }
+    function getFollowers(userId) {
+        const followers = [];
+        for (const [subId, following] of Object.entries(subscriptions)) {
+            if (following.includes(userId)) {
+                const user = getUserById(subId);
+                if (user && !user.banned) followers.push(user);
+            }
+        }
+        return followers;
+    }
+    
+    function logoutAllDevices() {
+        localStorage.removeItem('rb_session');
+        currentUserId = null;
+        viewingUserId = null;
+        window.location.hash = '';
+        render();
+        showMessage("Вы вышли со всех устройств", 'success');
+    }
+    
+    function setupGlobalDelegation() {
+        document.body.addEventListener('click', (e) => {
+            const mention = e.target.closest('.mention');
+            if (mention && mention.dataset.userid) {
+                e.preventDefault();
+                const userId = mention.dataset.userid;
+                const user = getUserById(userId);
+                if (user && !user.banned) {
+                    window.location.hash = 'users/' + encodeURIComponent(user.login);
+                    viewingUserId = userId;
+                    render();
+                }
+            }
+            
+            const followBtn = e.target.closest('.follow-btn-inline');
+            if (followBtn && followBtn.dataset.authorid) {
+                e.stopPropagation();
+                const authorId = followBtn.dataset.authorid;
+                if (currentUserId) toggleFollow(currentUserId, authorId);
+                else showMessage("Войдите в аккаунт", 'error');
+            }
+            
+            const delBtn = e.target.closest('.delete-post-btn');
+            if (delBtn && delBtn.dataset.postid) {
+                deletePost(delBtn.dataset.postid);
+            }
+            
+            const likeBtn = e.target.closest('.like-post-btn');
+            if (likeBtn && likeBtn.dataset.postid) {
+                toggleLike(likeBtn.dataset.postid);
+            }
+            
+            const toggleCommentsBtn = e.target.closest('.toggle-comments-btn');
+            if (toggleCommentsBtn && toggleCommentsBtn.dataset.postid) {
+                const container = document.getElementById(`comments_${toggleCommentsBtn.dataset.postid}`);
+                if (container) {
+                    if (container.style.display === 'none') {
+                        renderComments(toggleCommentsBtn.dataset.postid);
+                        container.style.display = 'block';
+                    } else {
+                        container.style.display = 'none';
+                    }
+                }
+            }
 
-    async function createSession(userId) {
-        try {
-            const sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-            
-            await supabase.from('user_sessions').insert({
-                user_id: userId,
-                session_id: sessionId,
-                is_active: true,
-                created_at: new Date().toISOString()
-            });
-            
-            return sessionId;
-        } catch (error) {
-            console.error('Session create error:', error);
-            return null;
-        }
-    }
-    
-    async function endAllUserSessions(userId) {
-        try {
-            await supabase.from('user_sessions')
-                .update({ is_active: false })
-                .eq('user_id', userId)
-                .eq('is_active', true);
-        } catch (error) {
-            console.error('End all sessions error:', error);
-        }
-    }
-    
-    async function endSession(sessionId) {
-        try {
-            await supabase.from('user_sessions')
-                .update({ is_active: false })
-                .eq('session_id', sessionId);
-        } catch (error) {
-            console.error('End session error:', error);
-        }
-    }
-    
-    async function isSessionValid(userId, sessionId) {
-        if (!userId || !sessionId) return false;
+            const logoutAllBtn = e.target.closest('.logout-all-btn');
+            if (logoutAllBtn) {
+                logoutAllDevices();
+            }
+
+            const mobileLogoutAllBtn = e.target.closest('#mobileLogoutAllBtn');
+            if (mobileLogoutAllBtn) {
+                logoutAllDevices();
+                document.getElementById('mobileSidebar').classList.remove('open');
+                document.getElementById('mobileOverlay').classList.remove('open');
+            }
+        });
         
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'doLogin') {
+                const logLogin = document.getElementById('logLogin');
+                const logPass = document.getElementById('logPass');
+                if (logLogin && logPass) login(logLogin.value.trim(), logPass.value);
+            } else if (e.target.id === 'doReg') {
+                showRegisterModal();
+            } else if (e.target.id === 'logoutBtn') {
+                logout();
+            }
+        });
+    }
+    
+    async function login(login, pass) {
+        login = sanitizeInput(login, 30);
+        const attempts = loginAttempts.get(login) || { count: 0, last: 0 };
+        if (attempts.count >= SECURITY.MAX_LOGIN_ATTEMPTS) {
+            const timeLeft = SECURITY.LOCKOUT_TIME - (Date.now() - attempts.last);
+            if (timeLeft > 0) {
+                showMessage(`Слишком много попыток. Попробуйте через ${Math.ceil(timeLeft / 60000)} мин.`, 'error');
+                return;
+            }
+            loginAttempts.delete(login);
+        }
         try {
-            const { data } = await supabase
-                .from('user_sessions')
-                .select('*')
-                .eq('user_id', userId)
-                .eq('session_id', sessionId)
-                .eq('is_active', true)
-                .single();
+            const { data } = await supabase.from('users').select('*');
+            if (data) users = data;
+            const u = users.find(x => x.login === login);
+            if (!u) {
+                loginAttempts.set(login, { count: attempts.count + 1, last: Date.now() });
+                showMessage("Неверный логин или пароль", 'error');
+                return;
+            }
+            const valid = await verifyPassword(pass, u.password);
+            if (!valid) {
+                loginAttempts.set(login, { count: attempts.count + 1, last: Date.now() });
+                showMessage("Неверный логин или пароль", 'error');
+                return;
+            }
+            if (u.banned) {
+                showMessage("Аккаунт заблокирован!", 'error');
+                return;
+            }
+            loginAttempts.delete(login);
+            currentUserId = u.id;
+            viewingUserId = null;
+            window.location.hash = '';
             
-            return !!data;
+            const sessionData = {
+                userId: currentUserId,
+                fingerprint: SECURITY.getFingerprint(),
+                timestamp: Date.now()
+            };
+            localStorage.setItem('rb_session', JSON.stringify(sessionData));
+            
+            render();
+            showMessage("Добро пожаловать, " + u.name, 'success');
         } catch (error) {
+            showMessage("Ошибка при входе", 'error');
+        }
+    }
+    
+    function logout() {
+        currentUserId = null;
+        viewingUserId = null;
+        window.location.hash = '';
+        localStorage.removeItem('rb_session');
+        render();
+        showMessage("Вы вышли из аккаунта", 'info');
+    }
+    
+    function showRegisterModal() {
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h3>Регистрация</h3>
+                <input type="text" id="regLogin" placeholder="Логин (3-30 символов)" maxlength="30">
+                <input type="password" id="regPassword" placeholder="Пароль (мин. 8 символов)">
+                <input type="text" id="regName" placeholder="Имя (2-50 символов)" maxlength="50">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="regAgreeRules">
+                    <label>Я согласен с правилами</label>
+                </div>
+                <div id="agreeError" class="error-message" style="display:none;">Нужно согласиться с правилами</div>
+                <button id="regSubmit" class="auth-btn">Зарегистрироваться</button>
+                <button id="regCancel" class="auth-btn" style="background:#8b9dc3;">Отмена</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        modal.querySelector('#regSubmit').onclick = async () => {
+            if (document.getElementById('hp_field').value.trim() !== '') {
+                showMessage("Регистрация отклонена", 'error');
+                modal.remove();
+                return;
+            }
+            if (!modal.querySelector('#regAgreeRules').checked) {
+                modal.querySelector('#agreeError').style.display = 'block';
+                return;
+            }
+            const success = await register(
+                modal.querySelector('#regLogin').value.trim(),
+                modal.querySelector('#regPassword').value,
+                modal.querySelector('#regName').value.trim(),
+                true
+            );
+            if (success !== false) modal.remove();
+        };
+        modal.querySelector('#regCancel').onclick = () => modal.remove();
+    }
+    
+    async function register(login, pass, name, agreeToRules) {
+        if (!agreeToRules) { showMessage("Вы должны согласиться с правилами", 'error'); return false; }
+        login = sanitizeInput(login, 30);
+        name = sanitizeInput(name, 50);
+        if (!/^[a-zA-Z0-9_-]{3,30}$/.test(login)) { showMessage("Логин: 3-30 символов (буквы, цифры, _, -)", 'error'); return false; }
+        if (pass.length < SECURITY.MIN_PASSWORD_LENGTH) { showMessage("Пароль: минимум " + SECURITY.MIN_PASSWORD_LENGTH + " символов", 'error'); return false; }
+        if (name.length < 2) { showMessage("Имя: минимум 2 символа", 'error'); return false; }
+        if (users.find(x => x.login.toLowerCase() === login.toLowerCase())) { showMessage("Логин занят", 'error'); return false; }
+        try {
+            const newId = "user_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+            const h = await hashPassword(pass);
+            const newUser = { id: newId, login, password: h, name, isAdmin: false, verified: false, avatar: "", banned: false };
+            await supabase.from('users').upsert(newUser);
+            users.push(newUser);
+            showMessage("Регистрация успешна! Войдите.", 'success');
+            return true;
+        } catch (error) {
+            showMessage("Ошибка при регистрации", 'error');
             return false;
         }
     }
-
-    window.viewUserProfile = function(id) { 
-        const user = getUserById(id); 
-        if (user) { 
-            window.location.hash = 'users/' + encodeURIComponent(user.login); 
-            viewingUserId = id === currentUserId ? null : id; 
-            currentTab = 'feed'; 
-            render(); 
-        }
-    };
     
-    window.goToMain = function() { 
-        window.location.hash = ''; 
-        viewingUserId = null; 
-        currentTab = 'feed'; 
-        render(); 
-    };
+    async function toggleFollow(a, b) {
+        if (a === b) { showMessage("Нельзя подписаться на себя", 'error'); return; }
+        if (!subscriptions[a]) subscriptions[a] = [];
+        const i = subscriptions[a].indexOf(b);
+        if (i === -1) subscriptions[a].push(b);
+        else subscriptions[a].splice(i, 1);
+        await supabase.from('subscriptions').upsert({ userId: a, following: subscriptions[a] });
+        renderSidebar();
+        renderMobile();
+        showMessage(i === -1 ? "Вы подписались" : "Вы отписались", 'success');
+    }
     
-    window.clearPhoto = function() { 
-        selectedPhoto = null; 
-        document.getElementById('postImage').value = ''; 
-        document.getElementById('photoPreview').textContent = ''; 
-    };
-    
-    window.clearAudio = function() { 
-        selectedAudio = null; 
-        document.getElementById('postAudio').value = ''; 
-        document.getElementById('audioPreview').textContent = ''; 
-    };
-
-    window.toggleLike = async function(id) { 
-        const u = getCurrentUser(); 
-        if (!u) { showMessage("Войдите в аккаунт", 'error'); return; } 
-        const p = posts.find(x => x.id == id); 
-        if (p) { 
+    async function toggleLike(id) {
+        const u = getCurrentUser();
+        if (!u) { showMessage("Войдите в аккаунт", 'error'); return; }
+        const p = posts.find(x => x.id == id);
+        if (p) {
             if (!p.likes) p.likes = [];
-            const i = p.likes.indexOf(u.id); 
+            const i = p.likes.indexOf(u.id);
             if (i === -1) p.likes.push(u.id);
             else p.likes.splice(i, 1);
             await supabase.from('posts').upsert(p);
             renderFeed();
         }
-    };
+    }
     
-    window.deletePost = async function(id) { 
+    async function deletePost(id) {
         const u = getCurrentUser();
-        const p = posts.find(x => x.id == id); 
-        if (p && u && (u.id === p.authorId || u.isAdmin)) { 
+        const p = posts.find(x => x.id == id);
+        if (p && u && (u.id === p.authorId || u.isAdmin)) {
             p.deleted = true;
             await supabase.from('posts').upsert(p);
-            posts = posts.filter(x => !x.deleted); 
+            posts = posts.filter(x => !x.deleted);
             displayedPostsCount = POSTS_PER_PAGE;
-            renderFeed(); 
-            showMessage("Пост удален", 'success'); 
+            renderFeed();
+            showMessage("Пост удален", 'success');
         } else {
-            showMessage("Нет прав для удаления", 'error'); 
+            showMessage("Нет прав для удаления", 'error');
         }
-    };
+    }
     
-    window.addComment = async function(id) { 
-        const inp = document.getElementById('cmt_' + id); 
-        if (!inp || !inp.value.trim()) return; 
-        const u = getCurrentUser(); 
-        if (!u) { showMessage("Войдите в аккаунт", 'error'); return; } 
-        const p = posts.find(x => x.id == id); 
-        if (p) { 
-            if (!p.comments) p.comments = [];
-            p.comments.push({ 
-                authorId: u.id, 
-                author: u.name, 
-                text: inp.value.trim().substring(0, 500), 
-                timestamp: Date.now() 
-            }); 
-            await supabase.from('posts').upsert(p);
-            inp.value = ''; 
-            renderComments(id); 
-        } 
-    };
-    
-    window.deleteComment = async function(postId, commentIdx) { 
-        const u = getCurrentUser(); 
+    async function addComment(id) {
+        const inp = document.getElementById('cmt_' + id);
+        if (!inp || !inp.value.trim()) return;
+        const u = getCurrentUser();
         if (!u) { showMessage("Войдите в аккаунт", 'error'); return; }
-        const p = posts.find(x => x.id == postId); 
+        if (!checkRateLimit(u.id, 'COMMENTS')) { showMessage("Слишком много комментариев", 'error'); return; }
+        const p = posts.find(x => x.id == id);
+        if (p) {
+            if (!p.comments) p.comments = [];
+            p.comments.push({
+                authorId: u.id,
+                author: sanitizeInput(u.name, 50),
+                text: sanitizeInput(inp.value, 500),
+                timestamp: Date.now()
+            });
+            await supabase.from('posts').upsert(p);
+            inp.value = '';
+            renderComments(id);
+        }
+    }
+    
+    async function deleteComment(postId, commentIdx) {
+        const u = getCurrentUser();
+        if (!u) { showMessage("Войдите в аккаунт", 'error'); return; }
+        const p = posts.find(x => x.id == postId);
         if (p && p.comments && p.comments[commentIdx]) {
             const comment = p.comments[commentIdx];
             if (u.id === comment.authorId || u.isAdmin) {
@@ -509,19 +640,8 @@
                 showMessage("Нет прав для удаления", 'error');
             }
         }
-    };
-
-    window.toggleComments = function(postId) {
-        const container = document.getElementById('comments_' + postId);
-        if (!container) return;
-        if (container.style.display === 'none') {
-            renderComments(postId);
-            container.style.display = 'block';
-        } else {
-            container.style.display = 'none';
-        }
-    };
-
+    }
+    
     function renderComments(postId) {
         const container = document.getElementById('comments_' + postId);
         if (!container) return;
@@ -529,506 +649,406 @@
         if (!p) return;
         const cu = getCurrentUser();
         let html = '';
-        
         if (p.comments && p.comments.length > 0) {
             for (let i = 0; i < p.comments.length; i++) {
                 const cmt = p.comments[i];
                 const canDelComment = cu && (cu.id === cmt.authorId || cu.isAdmin);
                 const commentAuthor = getUserById(cmt.authorId);
                 if (!commentAuthor) continue;
-                
                 const verifiedBadge = commentAuthor.verified ? ' <span class="verified-icon">✔</span>' : '';
-                const processedCommentText = processPostText(cmt.text);
-                
-                html += '<div class="comment">' +
-                    '<div class="comment-avatar" style="background-image:' + getAvatarUrl(cmt.authorId) + '" onclick="window.viewUserProfile(\'' + escapeAttr(cmt.authorId) + '\')"></div>' +
-                    '<div class="comment-content">' +
-                    '<strong onclick="window.viewUserProfile(\'' + escapeAttr(cmt.authorId) + '\')">' + escapeHtml(cmt.author) + verifiedBadge + '</strong> ' +
-                    processedCommentText +
-                    '<div class="comment-actions">' +
-                    (canDelComment ? '<button class="comment-action delete" onclick="window.deleteComment(\'' + escapeAttr(postId) + '\',' + i + ')">Удалить</button>' : '') +
-                    '</div></div></div>';
+                const safeAuthorId = cmt.authorId.replace(/[^a-zA-Z0-9_-]/g, '');
+                const safePostId = postId.replace(/[^a-zA-Z0-9_-]/g, '');
+                html += `<div class="comment">
+                    <div class="comment-avatar" style="background-image:${getAvatarUrl(cmt.authorId)}" data-userid="${safeAuthorId}"></div>
+                    <div class="comment-content">
+                        <strong data-userid="${safeAuthorId}">${escapeHtml(cmt.author)}${verifiedBadge}</strong>
+                        ${processPostText(cmt.text)}
+                        <div class="comment-actions">
+                            ${canDelComment ? `<button class="comment-action delete" data-postid="${safePostId}" data-commentidx="${i}">Удалить</button>` : ''}
+                        </div>
+                    </div>
+                </div>`;
             }
         } else {
             html = '<div style="color:#666;padding:5px;">Нет комментариев</div>';
         }
-        
-        html += '<div class="add-comment">' +
-            '<input id="cmt_' + escapeAttr(postId) + '" class="comment-input" placeholder="Комментарий..." maxlength="500">' +
-            '<button class="comment-btn" onclick="window.addComment(\'' + escapeAttr(postId) + '\')">Ответить</button>' +
-            '</div>';
-        
+        html += `<div class="add-comment">
+            <input id="cmt_${escapeAttr(postId)}" class="comment-input" placeholder="Комментарий..." maxlength="500">
+            <button class="comment-btn" data-postid="${escapeAttr(postId)}">Ответить</button>
+        </div>`;
         container.innerHTML = html;
     }
-
-    window.loadMorePosts = function() {
-        displayedPostsCount += POSTS_PER_PAGE;
-        renderFeed();
-    };
-
-    async function login(login, pass) { 
-        login = login.trim(); 
-        
-        try {
-            const { data } = await supabase.from('users').select('*');
-            if (data) users = data;
-            
-            const u = users.find(x => x.login === login); 
-            if (!u) { 
-                showMessage("Неверный логин или пароль", 'error'); 
-                return; 
+    
+    function processPostText(text) {
+        if (!text) return '';
+        let processed = escapeHtml(text).replace(/\n/g, '<br>');
+        processed = processed.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+                            .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>')
+                            .replace(/__([^_]+)__/g, '<u>$1</u>')
+                            .replace(/~~([^~]+)~~/g, '<s>$1</s>');
+        processed = processed.replace(/(https?:\/\/[^\s<>]+)/g, url => `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer nofollow">${escapeHtml(url)}</a>`);
+        const mentionRegex = /@([a-zA-Z0-9\u0430-\u044F\u0410-\u042F\u0451\u0401_-]+)/g;
+        processed = processed.replace(mentionRegex, (match, username) => {
+            const user = users.find(u => u.login && u.login.toLowerCase() === username.toLowerCase() && !u.banned);
+            if (user) {
+                return `<span class="mention" data-userid="${escapeAttr(user.id)}">@${escapeHtml(username)}</span>`;
             }
-            
-            let valid = false;
-            if (u.password && u.password.length === 64 && /^[a-f0-9]+$/i.test(u.password)) {
-                valid = await verifyPassword(pass, u.password);
-            } else {
-                valid = (u.password === pass);
-            }
-            
-            if (!valid) { 
-                showMessage("Неверный логин или пароль", 'error'); 
-                return; 
-            } 
-            
-            if (u.banned) { 
-                showMessage("Аккаунт заблокирован!", 'error'); 
-                return; 
-            } 
-            
-            const sessionId = await createSession(u.id);
-            if (!sessionId) {
-                showMessage("Ошибка создания сессии", 'error');
-                return;
-            }
-            
-            currentUserId = u.id;
-            currentSessionId = sessionId;
-            viewingUserId = null; 
-            window.location.hash = ''; 
-            
-            const sessionData = {
-                userId: u.id,
-                sessionId: sessionId
-            };
-            localStorage.setItem('rb_session', JSON.stringify(sessionData));
-            
-            render(); 
-            showMessage("Добро пожаловать, " + u.name, 'success');
-        } catch (error) {
-            console.error('Login error:', error);
-            showMessage("Ошибка при входе", 'error');
-        }
+            return '@' + escapeHtml(username);
+        });
+        return processed;
     }
     
-    async function logout() {
-        if (currentUserId) {
-            await endAllUserSessions(currentUserId);
-        }
-        
-        currentUserId = null;
-        currentSessionId = null;
-        viewingUserId = null; 
-        window.location.hash = ''; 
-        localStorage.removeItem('rb_session');
-        
-        render(); 
-        showMessage("Вы вышли из аккаунта на всех устройствах", 'info');
-    }
-    
-    async function register(login, pass, name, agreeToRules) { 
-        if (!agreeToRules) { 
-            showMessage("Вы должны согласиться с правилами", 'error'); 
-            return false; 
-        }
-        
-        if (users.find(x => x.login.toLowerCase() === login.toLowerCase())) { 
-            showMessage("Логин занят", 'error'); 
-            return false; 
-        } 
-        if (login.length < 3 || pass.length < 6 || name.length < 2) { 
-            showMessage("Минимум 3 символа для логина, 6 для пароля и 2 для имени", 'error'); 
-            return false; 
-        }
-        
-        if (!/^[a-zA-Z0-9_-]+$/.test(login)) {
-            showMessage("Логин может содержать только буквы, цифры, _ и -", 'error');
-            return false;
-        }
-        
-        try {
-            const newId = "user_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
-            const h = await hashPassword(pass); 
-            const newUser = { 
-                id: newId, 
-                login: login, 
-                password: h, 
-                name: name.substring(0, 50).replace(/[<>]/g, ''), 
-                isAdmin: false, 
-                verified: false, 
-                avatar: "", 
-                banned: false 
-            };
-            
-            await supabase.from('users').upsert(newUser);
-            users.push(newUser);
-            
-            showMessage("Регистрация успешна! Войдите.", 'success'); 
-            return true;
-        } catch (error) {
-            console.error('Register error:', error);
-            showMessage("Ошибка при регистрации", 'error');
-            return false;
-        }
-    }
-
-    function showRegisterModal() { 
-        const modal = document.createElement('div'); 
-        modal.className = 'modal'; 
-        modal.innerHTML = '<div class="modal-content">' +
-            '<h3>Регистрация</h3>' +
-            '<input type="text" id="regLogin" placeholder="Логин (3-30 символов)" maxlength="30">' +
-            '<input type="password" id="regPassword" placeholder="Пароль (мин. 6 символов)">' +
-            '<input type="text" id="regName" placeholder="Имя (2-50 символов)" maxlength="50">' +
-            '<div class="checkbox-container"><input type="checkbox" id="regAgreeRules"><label>Я согласен с правилами</label></div>' +
-            '<div id="agreeError" class="error-message" style="display:none;">Нужно согласиться с правилами</div>' +
-            '<button id="regSubmit" class="auth-btn">Зарегистрироваться</button>' +
-            '<button id="regCancel" class="auth-btn" style="background:#8b9dc3;">Отмена</button>' +
-            '</div>'; 
-        
-        document.body.appendChild(modal); 
-        
-        modal.querySelector('#regSubmit').onclick = async () => { 
-            if (!modal.querySelector('#regAgreeRules').checked) { 
-                modal.querySelector('#agreeError').style.display = 'block'; 
-                return; 
-            } 
-            const success = await register(
-                modal.querySelector('#regLogin').value.trim(), 
-                modal.querySelector('#regPassword').value, 
-                modal.querySelector('#regName').value.trim(), 
-                true
-            ); 
-            if (success !== false) modal.remove(); 
-        }; 
-        
-        modal.querySelector('#regCancel').onclick = () => modal.remove(); 
-    }
-
-    function renderAuth() { 
-        const u = getCurrentUser();
-        const c = document.getElementById('authWidget'); 
-        if (!u) {
-            c.innerHTML = '<div class="auth-area">' +
-                '<input id="logLogin" class="auth-input" placeholder="Логин">' +
-                '<input id="logPass" type="password" class="auth-input" placeholder="Пароль">' +
-                '<button id="doLogin" class="auth-btn">Войти</button>' +
-                '<button id="doReg" class="auth-btn">Регистрация</button>' +
-                '</div>'; 
-        } else {
-            c.innerHTML = '<div class="user-info">' +
-                '<span>' + escapeHtml(u.name) + (u.verified ? ' <span class="verified-icon">✔</span>' : '') + (u.isAdmin ? ' <span class="admin-badge">АДМИН</span>' : '') + '</span>' +
-                '<button id="logoutBtn" class="auth-btn">Выйти</button>' +
-                '</div>'; 
-        }
-        
-        const doLoginBtn = document.getElementById('doLogin');
-        if (doLoginBtn) {
-            doLoginBtn.addEventListener('click', () => {
-                const logLogin = document.getElementById('logLogin');
-                const logPass = document.getElementById('logPass');
-                login(logLogin.value, logPass.value);
-            });
-        }
-        
-        const doRegBtn = document.getElementById('doReg');
-        if (doRegBtn) {
-            doRegBtn.addEventListener('click', showRegisterModal);
-        }
-        
-        const logoutBtn = document.getElementById('logoutBtn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', logout);
-        }
-    }
-
-    function getFilteredPosts() { 
+    function getFilteredPosts() {
         let filtered = posts.filter(p => !p.deleted);
         filtered = filtered.filter(p => {
             const author = getUserById(p.authorId);
             return author && !author.banned;
         });
-        
-        if (viewingUserId) filtered = filtered.filter(p => p.authorId === viewingUserId); 
-        if (currentFeedMode === 'recent') filtered.sort((a, b) => b.timestamp - a.timestamp); 
-        else filtered = filtered.sort(() => Math.random() - 0.5); 
-        return filtered; 
+        if (viewingUserId) filtered = filtered.filter(p => p.authorId === viewingUserId);
+        if (currentFeedMode === 'recent') filtered.sort((a, b) => b.timestamp - a.timestamp);
+        else filtered = filtered.sort(() => Math.random() - 0.5);
+        return filtered;
     }
-
-    function renderFeed() { 
+    
+    function renderFeed() {
         const c = document.getElementById('feedContainer');
-        const cu = getCurrentUser(); 
-        const filtered = getFilteredPosts(); 
-        
-        if (!filtered.length) { 
-            c.innerHTML = '<div style="background:white;padding:20px;text-align:center;">Нет постов</div>'; 
-            return; 
+        const cu = getCurrentUser();
+        const filtered = getFilteredPosts();
+        if (!filtered.length) {
+            c.innerHTML = '<div style="background:white;padding:20px;text-align:center;">Нет постов</div>';
+            return;
         }
-        
-        let html = ''; 
+        let html = '';
         const postsToShow = filtered.slice(0, displayedPostsCount);
-        
         for (const p of postsToShow) {
             const author = getUserById(p.authorId);
             if (!author) continue;
-            
-            const canDel = cu && (cu.id === p.authorId || cu.isAdmin); 
-            const isLiked = cu && p.likes && p.likes.includes(cu.id); 
-            const vBadge = author.verified ? ' <span class="verified-icon">✔</span>' : ''; 
+            const canDel = cu && (cu.id === p.authorId || cu.isAdmin);
+            const isLiked = cu && p.likes && p.likes.includes(cu.id);
+            const vBadge = author.verified ? ' <span class="verified-icon">✔</span>' : '';
             const isSubscribed = cu && isFollowing(cu.id, p.authorId) && cu.id !== p.authorId;
-            const commentsCount = p.comments ? p.comments.length : 0;
+            const safeAuthorId = p.authorId.replace(/[^a-zA-Z0-9_-]/g, '');
+            const safePostId = p.id.toString().replace(/[^a-zA-Z0-9_-]/g, '');
             
-            const processedText = processPostText(p.text || '');
-            
-            html += '<div class="post" id="post_' + escapeAttr(p.id) + '">' +
-                '<div class="post-header" onclick="window.viewUserProfile(\'' + escapeAttr(p.authorId) + '\')">' +
-                '<div class="post-avatar" style="background-image:' + getAvatarUrl(p.authorId) + '"></div>' +
-                '<div><span class="post-author">' + escapeHtml(p.authorName || author.name) + vBadge + '</span>' +
-                '<span class="post-time">' + formatTime(p.timestamp) + '</span>';
-            
+            html += `<div class="post" id="post_${escapeAttr(p.id)}">
+                <div class="post-header" data-userid="${safeAuthorId}">
+                    <div class="post-avatar" style="background-image:${getAvatarUrl(p.authorId)}"></div>
+                    <div>
+                        <span class="post-author">${escapeHtml(p.authorName || author.name)}${vBadge}</span>
+                        <span class="post-time">${formatTime(p.timestamp)}</span>`;
             if (cu && cu.id !== p.authorId) {
-                html += '<button class="comment-action" style="margin-left:8px;background:' + (isSubscribed ? '#8b9dc3' : '#4267b2') + ';color:white;border:none;padding:3px 8px;border-radius:3px;cursor:pointer;font-size:10px;" onclick="event.stopPropagation(); window.toggleFollow(\'' + cu.id + '\',\'' + p.authorId + '\')">' + (isSubscribed ? 'Отписаться' : 'Подписаться') + '</button>';
+                html += `<button class="follow-btn-inline" style="margin-left:8px;background:${isSubscribed ? '#8b9dc3' : '#4267b2'};color:white;border:none;padding:3px 8px;border-radius:3px;cursor:pointer;font-size:10px;" data-authorid="${safeAuthorId}">${isSubscribed ? 'Отписаться' : 'Подписаться'}</button>`;
             }
-            
-            html += '</div></div><div class="post-content">' + processedText + '</div>';
-            
-            if (p.photo) html += '<img class="post-photo" src="' + escapeAttr(p.photo) + '" loading="lazy" alt="Post image">';
-            if (p.audio) html += '<div class="post-audio"><audio controls src="' + escapeAttr(p.audio) + '" preload="none"></audio></div>';
-            
-            html += '<div class="post-stats">' +
-                '<button class="like-btn ' + (isLiked ? 'liked' : '') + '" onclick="window.toggleLike(\'' + escapeAttr(p.id) + '\')">Нравится (' + (p.likes ? p.likes.length : 0) + ')</button>' +
-                (canDel ? '<button class="delete-btn" onclick="window.deletePost(\'' + escapeAttr(p.id) + '\')">Удалить пост</button>' : '') +
-                '</div>' +
-                '<button class="show-comments-btn" onclick="window.toggleComments(\'' + escapeAttr(p.id) + '\')">Комментарии (' + commentsCount + ')</button>' +
-                '<div class="comments-section" id="comments_' + escapeAttr(p.id) + '" style="display:none;"></div></div>';
+            html += `</div></div>
+                <div class="post-content">${processPostText(p.text || '')}</div>`;
+            if (p.photo) html += `<img class="post-photo" src="${escapeAttr(p.photo)}" loading="lazy" alt="Post image">`;
+            if (p.audio) html += `<div class="post-audio"><audio controls src="${escapeAttr(p.audio)}" preload="none"></audio></div>`;
+            html += `<div class="post-stats">
+                    <button class="like-btn like-post-btn ${isLiked ? 'liked' : ''}" data-postid="${safePostId}">Нравится (${p.likes ? p.likes.length : 0})</button>
+                    ${canDel ? `<button class="delete-btn delete-post-btn" data-postid="${safePostId}">Удалить пост</button>` : ''}
+                </div>
+                <button class="show-comments-btn toggle-comments-btn" data-postid="${safePostId}">Комментарии (${p.comments ? p.comments.length : 0})</button>
+                <div class="comments-section" id="comments_${escapeAttr(p.id)}" style="display:none;"></div>
+            </div>`;
         }
-        
         if (displayedPostsCount < filtered.length) {
-            html += '<button class="load-more-btn" onclick="window.loadMorePosts()">Загрузить ещё (' + (filtered.length - displayedPostsCount) + ')</button>';
+            html += `<button class="load-more-btn" onclick="window.loadMorePosts()">Загрузить ещё (${filtered.length - displayedPostsCount})</button>`;
         }
-        
-        c.innerHTML = html; 
+        c.innerHTML = html;
     }
-
-    function renderPostArea() { 
-        const pa = document.getElementById('postArea');
-        if (pa) pa.style.display = getCurrentUser() ? 'block' : 'none'; 
+    
+    function formatTime(timestamp) {
+        const diff = Math.floor((Date.now() - timestamp) / 1000);
+        if (diff < 60) return "только что";
+        if (diff < 3600) return Math.floor(diff / 60) + " мин назад";
+        if (diff < 86400) return Math.floor(diff / 3600) + " ч назад";
+        return Math.floor(diff / 86400) + " дн назад";
     }
-
-    function renderSidebar() { 
+    
+    window.loadMorePosts = function() { displayedPostsCount += POSTS_PER_PAGE; renderFeed(); };
+    window.clearPhoto = function() { selectedPhoto = null; document.getElementById('postImage').value = ''; document.getElementById('photoPreview').textContent = ''; };
+    window.clearAudio = function() { selectedAudio = null; document.getElementById('postAudio').value = ''; document.getElementById('audioPreview').textContent = ''; };
+    window.goToMain = function() { window.location.hash = ''; viewingUserId = null; currentTab = 'feed'; render(); };
+    window.viewUserProfile = function(id) {
+        const user = getUserById(id);
+        if (user && !user.banned) {
+            window.location.hash = 'users/' + encodeURIComponent(user.login);
+            viewingUserId = id === currentUserId ? null : id;
+            currentTab = 'feed';
+            render();
+        }
+    };
+    
+    function renderAuth() {
         const u = getCurrentUser();
-        const v = getUserById(viewingUserId); 
-        const displayUser = v || u; 
+        const c = document.getElementById('authWidget');
+        if (!u) {
+            c.innerHTML = `
+                <div class="auth-area">
+                    <input id="logLogin" class="auth-input" placeholder="Логин" maxlength="30">
+                    <input id="logPass" type="password" class="auth-input" placeholder="Пароль" maxlength="50">
+                    <button id="doLogin" class="auth-btn">Войти</button>
+                    <button id="doReg" class="auth-btn">Регистрация</button>
+                </div>
+            `;
+        } else {
+            c.innerHTML = `
+                <div class="user-info">
+                    <span>${escapeHtml(u.name)}${u.verified ? ' <span class="verified-icon">✔</span>' : ''}${u.isAdmin ? ' <span class="admin-badge">АДМИН</span>' : ''}</span>
+                    <button id="logoutBtn" class="auth-btn">Выйти</button>
+                    <button class="logout-all-btn">Выйти везде</button>
+                </div>
+            `;
+        }
+    }
+    
+    function renderSidebar() {
+        const u = getCurrentUser();
+        const v = getUserById(viewingUserId);
+        const displayUser = v || u;
         const isViewingOther = viewingUserId && viewingUserId !== currentUserId;
         const isOwnProfile = !viewingUserId || viewingUserId === currentUserId;
-
-        const avatar = document.getElementById('sidebarAvatar');
-        const name = document.getElementById('sidebarName');
-        const verifiedBadge = document.getElementById('sidebarVerifiedBadge');
         
-        if (avatar) avatar.style.backgroundImage = getAvatarUrl(displayUser ? displayUser.id : null); 
+        const avatar = document.getElementById('sidebarAvatar');
+        if (avatar) avatar.style.backgroundImage = getAvatarUrl(displayUser ? displayUser.id : null);
+        const name = document.getElementById('sidebarName');
         if (name) name.textContent = displayUser ? displayUser.name : "Гость";
+        const verifiedBadge = document.getElementById('sidebarVerifiedBadge');
         if (verifiedBadge) verifiedBadge.innerHTML = (displayUser && displayUser.verified) ? '<span class="verified-icon">✔</span>' : '';
-
+        
         const followCont = document.getElementById('sidebarFollowBtnContainer');
         if (followCont) {
             if (isViewingOther && u) {
                 const isSub = isFollowing(currentUserId, viewingUserId);
-                followCont.innerHTML = '<button class="follow-btn-on-page" style="background:' + (isSub ? '#8b9dc3' : '#4267b2') + ';" onclick="window.toggleFollow(\'' + currentUserId + '\',\'' + viewingUserId + '\')">' + (isSub ? 'Отписаться' : 'Подписаться') + '</button>';
+                followCont.innerHTML = `<button class="follow-btn-on-page" style="background:${isSub ? '#8b9dc3' : '#4267b2'};" onclick="window.toggleFollow('${currentUserId}','${viewingUserId}')">${isSub ? 'Отписаться' : 'Подписаться'}</button>`;
                 followCont.style.display = 'block';
             } else {
                 followCont.style.display = 'none';
             }
         }
-
+        
         const subsBtn = document.getElementById('sidebarSubsBtn');
         const followersBtn = document.getElementById('sidebarFollowersBtn');
         if (displayUser) {
-            if (subsBtn) { subsBtn.style.display = 'block'; subsBtn.textContent = 'ПОДПИСКИ (' + getFollowedCount(displayUser.id) + ')'; subsBtn.onclick = showSubsModal; }
-            if (followersBtn) { followersBtn.style.display = 'block'; followersBtn.textContent = 'ПОДПИСЧИКИ (' + getFollowers(displayUser.id).length + ')'; followersBtn.onclick = showFollowersModal; }
+            if (subsBtn) {
+                subsBtn.style.display = 'block';
+                subsBtn.textContent = 'ПОДПИСКИ (' + getFollowedCount(displayUser.id) + ')';
+                subsBtn.onclick = showSubsModal;
+            }
+            if (followersBtn) {
+                followersBtn.style.display = 'block';
+                followersBtn.textContent = 'ПОДПИСЧИКИ (' + getFollowers(displayUser.id).length + ')';
+                followersBtn.onclick = showFollowersModal;
+            }
         } else {
             if (subsBtn) subsBtn.style.display = 'none';
             if (followersBtn) followersBtn.style.display = 'none';
         }
-
+        
         const accountBtn = document.getElementById('sidebarAccountBtn');
         if (accountBtn) {
-            if (u && isOwnProfile) { accountBtn.style.display = 'block'; accountBtn.onclick = showAccountModal; }
-            else accountBtn.style.display = 'none';
+            if (u && isOwnProfile) {
+                accountBtn.style.display = 'block';
+                accountBtn.onclick = showAccountModal;
+            } else {
+                accountBtn.style.display = 'none';
+            }
         }
-
+        
         const backBtn = document.getElementById('sidebarBackBtn');
         if (backBtn) {
-            if (isViewingOther && u) { backBtn.style.display = 'block'; backBtn.onclick = window.goToMain; }
-            else backBtn.style.display = 'none';
+            if (isViewingOther && u) {
+                backBtn.style.display = 'block';
+                backBtn.onclick = window.goToMain;
+            } else {
+                backBtn.style.display = 'none';
+            }
+        }
+
+        const logoutAllBtn = document.getElementById('sidebarLogoutAllBtn');
+        if (logoutAllBtn) {
+            if (u && isOwnProfile) {
+                logoutAllBtn.style.display = 'block';
+            } else {
+                logoutAllBtn.style.display = 'none';
+            }
         }
         
         if (avatar) avatar.onclick = () => { if (u && isOwnProfile) showAvatarUpload(); };
     }
-
-    function renderMobile() { 
+    
+    function renderMobile() {
         const u = getCurrentUser();
         const displayUser = getUserById(viewingUserId) || u;
         const isViewingOther = viewingUserId && viewingUserId !== currentUserId;
         const isOwnProfile = !viewingUserId || viewingUserId === currentUserId;
-
-        const avatar = document.getElementById('mobileAvatar');
-        const name = document.getElementById('mobileName');
-        const verifiedBadge = document.getElementById('mobileVerifiedBadge');
         
-        if (avatar) avatar.style.backgroundImage = getAvatarUrl(displayUser ? displayUser.id : null); 
+        const avatar = document.getElementById('mobileAvatar');
+        if (avatar) avatar.style.backgroundImage = getAvatarUrl(displayUser ? displayUser.id : null);
+        const name = document.getElementById('mobileName');
         if (name) name.textContent = displayUser ? displayUser.name : "Гость";
+        const verifiedBadge = document.getElementById('mobileVerifiedBadge');
         if (verifiedBadge) verifiedBadge.innerHTML = (displayUser && displayUser.verified) ? '<span class="verified-icon">✔</span>' : '';
-
+        
         const followCont = document.getElementById('mobileFollowBtnContainer');
         if (followCont) {
             if (isViewingOther && u) {
                 const isSub = isFollowing(currentUserId, viewingUserId);
-                followCont.innerHTML = '<button class="follow-btn-on-page" style="width:100%;background:' + (isSub ? '#8b9dc3' : '#4267b2') + ';" onclick="window.toggleFollow(\'' + currentUserId + '\',\'' + viewingUserId + '\')">' + (isSub ? 'Отписаться' : 'Подписаться') + '</button>';
+                followCont.innerHTML = `<button class="follow-btn-on-page" style="width:100%;background:${isSub ? '#8b9dc3' : '#4267b2'};" onclick="window.toggleFollow('${currentUserId}','${viewingUserId}')">${isSub ? 'Отписаться' : 'Подписаться'}</button>`;
                 followCont.style.display = 'block';
             } else {
                 followCont.style.display = 'none';
             }
         }
-
+        
         const subsBtn = document.getElementById('mobileSubsBtn');
         const followersBtn = document.getElementById('mobileFollowersBtn');
         if (displayUser) {
-            if (subsBtn) { subsBtn.style.display = 'block'; subsBtn.textContent = 'ПОДПИСКИ (' + getFollowedCount(displayUser.id) + ')'; subsBtn.onclick = showSubsModal; }
-            if (followersBtn) { followersBtn.style.display = 'block'; followersBtn.textContent = 'ПОДПИСЧИКИ (' + getFollowers(displayUser.id).length + ')'; followersBtn.onclick = showFollowersModal; }
+            if (subsBtn) {
+                subsBtn.style.display = 'block';
+                subsBtn.textContent = 'ПОДПИСКИ (' + getFollowedCount(displayUser.id) + ')';
+                subsBtn.onclick = showSubsModal;
+            }
+            if (followersBtn) {
+                followersBtn.style.display = 'block';
+                followersBtn.textContent = 'ПОДПИСЧИКИ (' + getFollowers(displayUser.id).length + ')';
+                followersBtn.onclick = showFollowersModal;
+            }
         } else {
             if (subsBtn) subsBtn.style.display = 'none';
             if (followersBtn) followersBtn.style.display = 'none';
         }
-
+        
         const accountBtn = document.getElementById('mobileAccountBtn');
         if (accountBtn) {
-            if (u && isOwnProfile) { accountBtn.style.display = 'block'; accountBtn.onclick = showAccountModal; }
-            else accountBtn.style.display = 'none';
+            if (u && isOwnProfile) {
+                accountBtn.style.display = 'block';
+                accountBtn.onclick = showAccountModal;
+            } else {
+                accountBtn.style.display = 'none';
+            }
         }
-
+        
         const backBtn = document.getElementById('mobileBackBtn');
         if (backBtn) {
-            if (isViewingOther && u) { backBtn.style.display = 'block'; backBtn.onclick = window.goToMain; }
-            else backBtn.style.display = 'none';
+            if (isViewingOther && u) {
+                backBtn.style.display = 'block';
+                backBtn.onclick = window.goToMain;
+            } else {
+                backBtn.style.display = 'none';
+            }
+        }
+
+        const mobileLogoutAllBtn = document.getElementById('mobileLogoutAllBtn');
+        if (mobileLogoutAllBtn) {
+            if (u && isOwnProfile) {
+                mobileLogoutAllBtn.style.display = 'block';
+            } else {
+                mobileLogoutAllBtn.style.display = 'none';
+            }
         }
         
         if (avatar) avatar.onclick = () => { if (u && isOwnProfile) showAvatarUpload(); };
     }
-
-    async function publishPost() { 
-        const u = getCurrentUser(); 
-        if (!u) { showMessage("Войдите в аккаунт", 'error'); return; } 
+    
+    async function publishPost() {
+        if (isPublishing) return;
+        const u = getCurrentUser();
+        if (!u) { showMessage("Войдите в аккаунт", 'error'); return; }
+        if (!checkRateLimit(u.id, 'POSTS')) { showMessage("Слишком много постов. Подождите минуту.", 'error'); return; }
+        const txt = document.getElementById('postText').value;
+        if (!txt.trim() && !selectedPhoto && !selectedAudio) { showMessage("Напишите текст или добавьте файл", 'error'); return; }
+        if (txt.length > SECURITY.MAX_POST_LENGTH) { showMessage("Пост слишком длинный", 'error'); return; }
         
-        const txt = document.getElementById('postText').value; 
-        if (!txt.trim() && !selectedPhoto && !selectedAudio) { 
-            showMessage("Напишите текст или добавьте файл", 'error'); 
-            return; 
-        } 
+        isPublishing = true;
+        document.getElementById('publishBtn').disabled = true;
         
         let img64 = "";
         let aud64 = "";
         
-        if (selectedPhoto) {
-            if (selectedPhoto.size > 5 * 1024 * 1024) {
-                showMessage("Фото слишком большое (макс. 5 МБ)", 'error');
-                return;
+        try {
+            if (selectedPhoto) {
+                if (selectedPhoto.size > SECURITY.MAX_FILE_SIZE_PHOTO) throw new Error("Фото слишком большое (макс. 5 МБ)");
+                if (!SECURITY.ALLOWED_IMAGE_TYPES.includes(selectedPhoto.type)) throw new Error("Неподдерживаемый формат изображения");
+                if (!await validateFileMagicBytes(selectedPhoto, 'image')) throw new Error("Файл поврежден или имеет неверный формат");
+                img64 = await new Promise(r => { const fr = new FileReader(); fr.onload = e => r(e.target.result); fr.readAsDataURL(selectedPhoto); });
             }
-            img64 = await new Promise(r => { 
-                const fr = new FileReader(); 
-                fr.onload = e => r(e.target.result); 
-                fr.readAsDataURL(selectedPhoto); 
-            });
-        }
-        
-        if (selectedAudio) {
-            if (selectedAudio.size > 10 * 1024 * 1024) {
-                showMessage("Аудио слишком большое (макс. 10 МБ)", 'error');
-                return;
+            
+            if (selectedAudio) {
+                if (selectedAudio.size > SECURITY.MAX_FILE_SIZE_AUDIO) throw new Error("Аудио слишком большое (макс. 10 МБ)");
+                if (!SECURITY.ALLOWED_AUDIO_TYPES.includes(selectedAudio.type)) throw new Error("Неподдерживаемый формат аудио");
+                if (!await validateFileMagicBytes(selectedAudio, 'audio')) throw new Error("Аудиофайл поврежден или имеет неверный формат");
+                aud64 = await new Promise(r => { const fr = new FileReader(); fr.onload = e => r(e.target.result); fr.readAsDataURL(selectedAudio); });
             }
-            aud64 = await new Promise(r => { 
-                const fr = new FileReader(); 
-                fr.onload = e => r(e.target.result); 
-                fr.readAsDataURL(selectedAudio); 
-            });
+            
+            const newPost = {
+                id: Date.now().toString(),
+                authorId: u.id,
+                authorName: sanitizeInput(u.name, 50),
+                timestamp: Date.now(),
+                text: sanitizeInput(txt, SECURITY.MAX_POST_LENGTH) || "Новый пост",
+                photo: img64,
+                audio: aud64,
+                likes: [],
+                comments: [],
+                deleted: false
+            };
+            await supabase.from('posts').upsert(newPost);
+            posts.unshift(newPost);
+            
+            document.getElementById('postText').value = '';
+            selectedPhoto = null;
+            selectedAudio = null;
+            document.getElementById('postImage').value = '';
+            document.getElementById('postAudio').value = '';
+            document.getElementById('photoPreview').textContent = '';
+            document.getElementById('audioPreview').textContent = '';
+            document.getElementById('charCounter').textContent = '0 / ' + SECURITY.MAX_POST_LENGTH;
+            
+            displayedPostsCount = POSTS_PER_PAGE;
+            renderFeed();
+            showMessage("Опубликовано!", 'success');
+        } catch (error) {
+            showMessage(error.message, 'error');
+        } finally {
+            isPublishing = false;
+            document.getElementById('publishBtn').disabled = false;
         }
-        
-        const newPost = { 
-            id: Date.now().toString(), 
-            authorId: u.id, 
-            authorName: u.name, 
-            timestamp: Date.now(), 
-            text: txt.trim() || "Новый пост", 
-            photo: img64, 
-            audio: aud64, 
-            likes: [], 
-            comments: [], 
-            deleted: false 
-        }; 
-        
-        await supabase.from('posts').upsert(newPost);
-        posts.unshift(newPost);
-        
-        document.getElementById('postText').value = ''; 
-        selectedPhoto = null;
-        selectedAudio = null;
-        document.getElementById('postImage').value = '';
-        document.getElementById('postAudio').value = '';
-        document.getElementById('photoPreview').textContent = '';
-        document.getElementById('audioPreview').textContent = '';
-        document.getElementById('charCounter').textContent = '0 / 1500';
-        
-        displayedPostsCount = POSTS_PER_PAGE;
-        renderFeed(); 
-        showMessage("Опубликовано!", 'success');
     }
-
+    
     function renderAbout() {
         const c = document.getElementById('aboutContainer');
         if (!c) return;
-        let html = '<h3>О сайте</h3>';
-        html += '<div style="margin:15px 0;line-height:1.5;">' + escapeHtml(aboutText).replace(/\n/g, '<br>') + '</div>';
-        c.innerHTML = html;
+        c.innerHTML = '<h3>О сайте</h3><div style="margin:15px 0;line-height:1.5;">' + escapeHtml(aboutText).replace(/\n/g, '<br>') + '</div>';
     }
-
+    
     function renderRules() {
         const c = document.getElementById('rulesContainer');
         if (!c) return;
-        let html = '<h3>Правила RetroBook</h3>';
-        html += '<div style="margin:15px 0;line-height:1.5;white-space:pre-wrap;">' + escapeHtml(rulesText) + '</div>';
-        c.innerHTML = html;
+        c.innerHTML = '<h3>Правила RetroBook</h3><div style="margin:15px 0;line-height:1.5;white-space:pre-wrap;">' + escapeHtml(rulesText) + '</div>';
     }
-
+    
     function parseHash() {
         const h = window.location.hash.substring(1);
         if (h === 'about') { currentTab = 'about'; viewingUserId = null; }
         else if (h === 'rules') { currentTab = 'rules'; viewingUserId = null; }
-        else if (h.startsWith('users/')) { 
-            currentTab = 'feed'; 
+        else if (h.startsWith('users/')) {
+            currentTab = 'feed';
             const login = decodeURIComponent(h.split('/')[1]);
             const user = getUserByLogin(login);
             viewingUserId = user ? user.id : null;
-        }
-        else { currentTab = 'feed'; viewingUserId = null; }
+        } else { currentTab = 'feed'; viewingUserId = null; }
         render();
     }
-
-    function render() { 
+    
+    function render() {
         try {
-            renderAuth(); 
-            renderSidebar(); 
-            renderMobile(); 
-            renderPostArea(); 
+            renderAuth();
+            renderSidebar();
+            renderMobile();
+            
+            const pa = document.getElementById('postArea');
+            if (pa) pa.style.display = getCurrentUser() ? 'block' : 'none';
             
             const feedContainer = document.getElementById('feedContainer');
             const aboutContainer = document.getElementById('aboutContainer');
@@ -1038,7 +1058,7 @@
             if (aboutContainer) aboutContainer.style.display = currentTab === 'about' ? 'block' : 'none';
             if (rulesContainer) rulesContainer.style.display = currentTab === 'rules' ? 'block' : 'none';
             
-            if (currentTab === 'feed') renderFeed(); 
+            if (currentTab === 'feed') renderFeed();
             else if (currentTab === 'about') renderAbout();
             else if (currentTab === 'rules') renderRules();
             
@@ -1046,230 +1066,217 @@
             const activeTab = document.querySelector('.tab-btn[data-tab="' + currentTab + '"]');
             if (activeTab) activeTab.classList.add('active');
             
-            const loading = document.getElementById('globalLoading');
-            if (loading) loading.style.display = 'none';
+            document.getElementById('globalLoading').style.display = 'none';
         } catch (error) {
-            console.error('Render error:', error);
-            const loading = document.getElementById('globalLoading');
-            if (loading) loading.style.display = 'none';
+            document.getElementById('globalLoading').style.display = 'none';
             showMessage('Произошла ошибка при загрузке', 'error');
         }
     }
-
-    function formatText(text, format) { 
-        const ta = document.getElementById('postText'); 
+    
+    function formatText(text, format) {
+        const ta = document.getElementById('postText');
         const start = ta.selectionStart;
-        const end = ta.selectionEnd; 
-        const selected = text.substring(start, end); 
+        const end = ta.selectionEnd;
+        const selected = text.substring(start, end);
         let replacement;
         if (format === 'bold') replacement = '**' + selected + '**';
         else if (format === 'italic') replacement = '*' + selected + '*';
         else if (format === 'underline') replacement = '__' + selected + '__';
         else replacement = '~~' + selected + '~~';
-        return text.substring(0, start) + replacement + text.substring(end); 
-    }
-
-    function isFollowing(a, b) { return subscriptions[a] && subscriptions[a].includes(b); }
-    function getFollowedCount(id) { return subscriptions[id] ? subscriptions[id].length : 0; }
-    
-    function getFollowers(userId) { 
-        const followers = []; 
-        for (const [subId, following] of Object.entries(subscriptions)) { 
-            if (following.includes(userId)) { 
-                const user = getUserById(subId); 
-                if (user && !user.banned) followers.push(user); 
-            } 
-        } 
-        return followers; 
+        return text.substring(0, start) + replacement + text.substring(end);
     }
     
-    window.toggleFollow = async function(a, b) { 
-        if (a === b) { showMessage("Нельзя подписаться на себя", 'error'); return; } 
-        if (!subscriptions[a]) subscriptions[a] = []; 
-        const i = subscriptions[a].indexOf(b); 
-        if (i === -1) subscriptions[a].push(b);
-        else subscriptions[a].splice(i, 1);
-        await supabase.from('subscriptions').upsert({ userId: a, following: subscriptions[a] });
-        renderSidebar(); 
-        renderMobile(); 
-        showMessage(i === -1 ? "Вы подписались" : "Вы отписались", 'success'); 
-    };
+    window.toggleFollow = toggleFollow;
+    window.toggleLike = toggleLike;
+    window.deletePost = deletePost;
+    window.addComment = addComment;
+    window.deleteComment = deleteComment;
     
-    function showSubsModal() { 
-        const u = getUserById(viewingUserId || currentUserId); 
-        if (!u) return; 
-        const ids = subscriptions[u.id] || []; 
-        const usersList = ids.map(id => getUserById(id)).filter(x => x && !x.banned); 
-        const modal = document.createElement('div'); 
-        modal.className = 'modal'; 
-        modal.innerHTML = '<div class="modal-content"><h3>Подписки ' + escapeHtml(u.name) + ' (' + usersList.length + ')</h3><div id="subsList"></div><button id="closeSubsModal" class="auth-btn">Закрыть</button></div>'; 
-        document.body.appendChild(modal); 
-        const listDiv = modal.querySelector('#subsList'); 
+    function showSubsModal() {
+        const u = getUserById(viewingUserId || currentUserId);
+        if (!u) return;
+        const ids = subscriptions[u.id] || [];
+        const usersList = ids.map(id => getUserById(id)).filter(x => x && !x.banned);
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = '<div class="modal-content"><h3>Подписки ' + escapeHtml(u.name) + ' (' + usersList.length + ')</h3><div id="subsList"></div><button id="closeSubsModal" class="auth-btn">Закрыть</button></div>';
+        document.body.appendChild(modal);
+        const listDiv = modal.querySelector('#subsList');
         if (usersList.length === 0) {
-            listDiv.innerHTML = '<p>Нет подписок</p>'; 
-        } else { 
-            usersList.forEach(user => { 
-                const div = document.createElement('div'); 
-                div.className = 'subs-item'; 
-                div.innerHTML = '<strong>' + escapeHtml(user.name) + '</strong> ' + (user.verified ? '<span class="verified-icon">✔</span>' : ''); 
-                div.onclick = () => { 
-                    window.location.hash = 'users/' + encodeURIComponent(user.login); 
-                    viewingUserId = user.id; 
-                    modal.remove(); 
-                    render(); 
-                }; 
-                listDiv.appendChild(div); 
-            }); 
-        } 
-        modal.querySelector('#closeSubsModal').onclick = () => modal.remove(); 
+            listDiv.innerHTML = '<p>Нет подписок</p>';
+        } else {
+            usersList.forEach(user => {
+                const div = document.createElement('div');
+                div.className = 'subs-item';
+                div.innerHTML = '<strong>' + escapeHtml(user.name) + '</strong> ' + (user.verified ? '<span class="verified-icon">✔</span>' : '');
+                div.onclick = () => {
+                    window.location.hash = 'users/' + encodeURIComponent(user.login);
+                    viewingUserId = user.id;
+                    modal.remove();
+                    render();
+                };
+                listDiv.appendChild(div);
+            });
+        }
+        modal.querySelector('#closeSubsModal').onclick = () => modal.remove();
     }
     
-    function showFollowersModal() { 
-        const user = getUserById(viewingUserId || currentUserId); 
-        if (!user) return; 
-        const followers = getFollowers(user.id); 
-        const modal = document.createElement('div'); 
-        modal.className = 'modal'; 
-        modal.innerHTML = '<div class="modal-content"><h3>Подписчики ' + escapeHtml(user.name) + ' (' + followers.length + ')</h3><div id="followersList"></div><button id="closeFollowersModal" class="auth-btn">Закрыть</button></div>'; 
-        document.body.appendChild(modal); 
-        const listDiv = modal.querySelector('#followersList'); 
+    function showFollowersModal() {
+        const user = getUserById(viewingUserId || currentUserId);
+        if (!user) return;
+        const followers = getFollowers(user.id);
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = '<div class="modal-content"><h3>Подписчики ' + escapeHtml(user.name) + ' (' + followers.length + ')</h3><div id="followersList"></div><button id="closeFollowersModal" class="auth-btn">Закрыть</button></div>';
+        document.body.appendChild(modal);
+        const listDiv = modal.querySelector('#followersList');
         if (followers.length === 0) {
-            listDiv.innerHTML = '<p>Нет подписчиков</p>'; 
-        } else { 
-            followers.forEach(f => { 
-                const div = document.createElement('div'); 
-                div.className = 'followers-item'; 
-                div.innerHTML = '<strong>' + escapeHtml(f.name) + '</strong> ' + (f.verified ? '<span class="verified-icon">✔</span>' : ''); 
-                div.onclick = () => { 
-                    window.location.hash = 'users/' + encodeURIComponent(f.login); 
-                    viewingUserId = f.id; 
-                    modal.remove(); 
-                    render(); 
-                }; 
-                listDiv.appendChild(div); 
-            }); 
-        } 
-        modal.querySelector('#closeFollowersModal').onclick = () => modal.remove(); 
+            listDiv.innerHTML = '<p>Нет подписчиков</p>';
+        } else {
+            followers.forEach(f => {
+                const div = document.createElement('div');
+                div.className = 'followers-item';
+                div.innerHTML = '<strong>' + escapeHtml(f.name) + '</strong> ' + (f.verified ? '<span class="verified-icon">✔</span>' : '');
+                div.onclick = () => {
+                    window.location.hash = 'users/' + encodeURIComponent(f.login);
+                    viewingUserId = f.id;
+                    modal.remove();
+                    render();
+                };
+                listDiv.appendChild(div);
+            });
+        }
+        modal.querySelector('#closeFollowersModal').onclick = () => modal.remove();
     }
     
-    function showAccountModal() { 
-        const u = getCurrentUser(); 
-        if (!u) return; 
-        const modal = document.createElement('div'); 
-        modal.className = 'modal'; 
-        modal.innerHTML = '<div class="modal-content">' +
-            '<h3>Управление аккаунтом</h3>' +
-            '<div class="account-section"><h4>Изменить имя</h4><input type="text" id="newName" value="' + escapeHtml(u.name) + '" maxlength="50"><button id="saveNameBtn" class="auth-btn">Сохранить</button></div>' +
-            '<div class="account-section"><h4>Изменить логин</h4><input type="text" id="newLogin" value="' + escapeHtml(u.login) + '" maxlength="30"><button id="saveLoginBtn" class="auth-btn">Сохранить</button></div>' +
-            '<div class="account-section"><h4>Изменить пароль</h4><input type="password" id="newPassword" placeholder="Новый пароль"><input type="password" id="confirmPassword" placeholder="Подтвердите пароль"><button id="savePasswordBtn" class="auth-btn">Сохранить</button></div>' +
-            '<button id="deleteAccountBtn" class="delete-account-btn">Удалить аккаунт</button>' +
-            '<button id="closeAccountModal" class="auth-btn" style="background:#8b9dc3; width:100%; margin-top:10px;">Закрыть</button>' +
-            '</div>'; 
-        document.body.appendChild(modal); 
+    function showAccountModal() {
+        const u = getCurrentUser();
+        if (!u) return;
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h3>Управление аккаунтом</h3>
+                <div class="account-section">
+                    <h4>Изменить имя</h4>
+                    <input type="text" id="newName" value="${escapeHtml(u.name)}" maxlength="50">
+                    <button id="saveNameBtn" class="auth-btn">Сохранить</button>
+                </div>
+                <div class="account-section">
+                    <h4>Изменить логин</h4>
+                    <input type="text" id="newLogin" value="${escapeHtml(u.login)}" maxlength="30">
+                    <button id="saveLoginBtn" class="auth-btn">Сохранить</button>
+                </div>
+                <div class="account-section">
+                    <h4>Изменить пароль</h4>
+                    <input type="password" id="newPassword" placeholder="Новый пароль">
+                    <input type="password" id="confirmPassword" placeholder="Подтвердите пароль">
+                    <button id="savePasswordBtn" class="auth-btn">Сохранить</button>
+                </div>
+                <button id="deleteAccountBtn" class="delete-account-btn">Удалить аккаунт</button>
+                <button id="closeAccountModal" class="auth-btn" style="background:#8b9dc3; width:100%; margin-top:10px;">Закрыть</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
         
-        document.getElementById('saveNameBtn').onclick = async () => { 
-            const newName = document.getElementById('newName').value.trim();
+        document.getElementById('saveNameBtn').onclick = async () => {
+            const newName = sanitizeInput(document.getElementById('newName').value, 50);
             if (newName.length < 2) { showMessage("Имя слишком короткое", 'error'); return; }
-            u.name = newName.substring(0, 50).replace(/[<>]/g, '');
-            await supabase.from('users').upsert(u); 
-            modal.remove(); 
-            renderSidebar(); 
+            u.name = newName;
+            await supabase.from('users').upsert(u);
+            modal.remove();
+            renderSidebar();
             renderMobile();
-            showMessage("Имя обновлено", 'success'); 
-        }; 
+            showMessage("Имя обновлено", 'success');
+        };
         
-        document.getElementById('saveLoginBtn').onclick = async () => { 
-            const nl = document.getElementById('newLogin').value.trim();
-            if (nl.length < 3) { showMessage("Логин слишком короткий", 'error'); return; }
-            if (!/^[a-zA-Z0-9_-]+$/.test(nl)) { showMessage("Логин может содержать только буквы, цифры, _ и -", 'error'); return; }
-            if (users.find(x => x.login.toLowerCase() === nl.toLowerCase() && x.id !== u.id)) { 
-                showMessage("Логин занят", 'error'); 
-                return; 
-            } 
-            u.login = nl; 
-            await supabase.from('users').upsert(u); 
-            modal.remove(); 
-            renderSidebar(); 
+        document.getElementById('saveLoginBtn').onclick = async () => {
+            const nl = sanitizeInput(document.getElementById('newLogin').value, 30);
+            if (!/^[a-zA-Z0-9_-]{3,30}$/.test(nl)) { showMessage("Логин: 3-30 символов (буквы, цифры, _, -)", 'error'); return; }
+            if (users.find(x => x.login.toLowerCase() === nl.toLowerCase() && x.id !== u.id)) { showMessage("Логин занят", 'error'); return; }
+            u.login = nl;
+            await supabase.from('users').upsert(u);
+            modal.remove();
+            renderSidebar();
             renderMobile();
-            showMessage("Логин обновлен", 'success'); 
-        }; 
+            showMessage("Логин обновлен", 'success');
+        };
         
-        document.getElementById('savePasswordBtn').onclick = async () => { 
+        document.getElementById('savePasswordBtn').onclick = async () => {
             const np = document.getElementById('newPassword').value;
-            const cp = document.getElementById('confirmPassword').value; 
+            const cp = document.getElementById('confirmPassword').value;
             if (!np || np !== cp) { showMessage("Пароли не совпадают", 'error'); return; }
-            if (np.length < 6) { showMessage("Пароль должен быть не менее 6 символов", 'error'); return; }
-            u.password = await hashPassword(np); 
-            await supabase.from('users').upsert(u); 
-            modal.remove(); 
-            showMessage("Пароль обновлен", 'success'); 
-        }; 
+            if (np.length < SECURITY.MIN_PASSWORD_LENGTH) { showMessage("Пароль: минимум " + SECURITY.MIN_PASSWORD_LENGTH + " символов", 'error'); return; }
+            u.password = await hashPassword(np);
+            await supabase.from('users').upsert(u);
+            modal.remove();
+            showMessage("Пароль обновлен", 'success');
+        };
         
-        document.getElementById('deleteAccountBtn').onclick = async () => { 
-            if (confirm("Вы уверены? Это действие нельзя отменить!")) { 
-                posts = posts.filter(p => p.authorId !== u.id); 
-                users = users.filter(x => x.id !== u.id); 
-                await endAllUserSessions(u.id);
-                await supabase.from('users').delete().eq('id', u.id); 
-                if (currentUserId === u.id) { 
+        document.getElementById('deleteAccountBtn').onclick = async () => {
+            if (confirm("Вы уверены? Это действие нельзя отменить!")) {
+                posts = posts.filter(p => p.authorId !== u.id);
+                users = users.filter(x => x.id !== u.id);
+                await supabase.from('users').delete().eq('id', u.id);
+                if (currentUserId === u.id) {
                     currentUserId = null;
-                    currentSessionId = null;
                     localStorage.removeItem('rb_session');
-                } 
-                modal.remove(); 
-                render(); 
-            } 
-        }; 
+                }
+                modal.remove();
+                render();
+            }
+        };
         
-        document.getElementById('closeAccountModal').onclick = () => modal.remove(); 
+        document.getElementById('closeAccountModal').onclick = () => modal.remove();
     }
     
-    function showAvatarUpload() { 
-        const u = getCurrentUser(); 
-        if (!u) return; 
-        const modal = document.createElement('div'); 
-        modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:1000'; 
-        modal.innerHTML = '<div style="background:white;width:320px;padding:20px;border-radius:8px;">' +
-            '<h3>Сменить аватар</h3>' +
-            '<div id="avPrev" style="width:100px;height:100px;border-radius:50%;background-size:cover;margin:10px auto;"></div>' +
-            '<input type="file" id="avFile" accept="image/jpeg,image/png,image/gif,image/webp">' +
-            '<div><button id="upBtn" class="auth-btn">Выбрать</button><button id="canBtn" class="auth-btn" style="background:#8b9dc3;">Отмена</button></div>' +
-            '</div>'; 
-        document.body.appendChild(modal); 
-        const prev = modal.querySelector('#avPrev'); 
-        prev.style.backgroundImage = getAvatarUrl(u.id); 
+    function showAvatarUpload() {
+        const u = getCurrentUser();
+        if (!u) return;
+        const modal = document.createElement('div');
+        modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:1000';
+        modal.innerHTML = `
+            <div style="background:white;width:320px;padding:20px;border-radius:8px;">
+                <h3>Сменить аватар</h3>
+                <div id="avPrev" style="width:100px;height:100px;border-radius:50%;background-size:cover;margin:10px auto;"></div>
+                <input type="file" id="avFile" accept="image/jpeg,image/png,image/gif,image/webp">
+                <div><button id="upBtn" class="auth-btn">Выбрать</button><button id="canBtn" class="auth-btn" style="background:#8b9dc3;">Отмена</button></div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        const prev = modal.querySelector('#avPrev');
+        prev.style.backgroundImage = getAvatarUrl(u.id);
         
-        modal.querySelector('#avFile').onchange = e => { 
-            const f = e.target.files[0]; 
+        modal.querySelector('#avFile').onchange = async (e) => {
+            const f = e.target.files[0];
             if (!f) return;
-            if (f.size > 5 * 1024 * 1024) {
-                showMessage("Файл больше 5 МБ", 'error');
-                return;
+            if (f.size > SECURITY.MAX_FILE_SIZE_PHOTO) { showMessage("Файл больше 5 МБ", 'error'); return; }
+            if (!SECURITY.ALLOWED_IMAGE_TYPES.includes(f.type)) { showMessage("Неподдерживаемый формат", 'error'); return; }
+            if (!await validateFileMagicBytes(f, 'image')) { showMessage("Файл поврежден или имеет неверный формат", 'error'); return; }
+            const r = new FileReader();
+            r.onload = ev => prev.style.backgroundImage = "url('" + ev.target.result + "')";
+            r.readAsDataURL(f);
+        };
+        
+        modal.querySelector('#upBtn').onclick = () => {
+            const f = modal.querySelector('#avFile').files[0];
+            if (f) {
+                const r = new FileReader();
+                r.onload = async ev => {
+                    u.avatar = ev.target.result;
+                    await supabase.from('users').upsert(u);
+                    modal.remove();
+                    renderSidebar();
+                    renderMobile();
+                    showMessage("Аватар обновлен", 'success');
+                };
+                r.readAsDataURL(f);
             }
-            const r = new FileReader(); 
-            r.onload = ev => prev.style.backgroundImage = "url('" + ev.target.result + "')"; 
-            r.readAsDataURL(f); 
-        }; 
+        };
         
-        modal.querySelector('#upBtn').onclick = () => { 
-            const f = modal.querySelector('#avFile').files[0]; 
-            if (f) { 
-                const r = new FileReader(); 
-                r.onload = async ev => { 
-                    u.avatar = ev.target.result; 
-                    await supabase.from('users').upsert(u); 
-                    modal.remove(); 
-                    renderSidebar(); 
-                    renderMobile(); 
-                    showMessage("Аватар обновлен", 'success'); 
-                }; 
-                r.readAsDataURL(f); 
-            } 
-        }; 
-        
-        modal.querySelector('#canBtn').onclick = () => modal.remove(); 
+        modal.querySelector('#canBtn').onclick = () => modal.remove();
     }
-
+    
     async function loadSettings() {
         try {
             const { data } = await supabase.from('settings').select('*').eq('key', 'main').single();
@@ -1278,91 +1285,49 @@
                 rulesText = data.rules_text || rulesText;
                 maintenanceMode = data.maintenance_mode || false;
             }
-        } catch (error) {
-            console.error('Settings load error:', error);
-        }
+        } catch (error) {}
     }
-
+    
+    function showMaintenanceScreen() {
+        document.getElementById('globalLoading').style.display = 'none';
+        const header = document.querySelector('.header'); if (header) header.style.display = 'none';
+        const container = document.querySelector('.container'); if (container) container.style.display = 'none';
+        const mobileSidebar = document.querySelector('.mobile-sidebar'); if (mobileSidebar) mobileSidebar.style.display = 'none';
+        const mobileOverlay = document.querySelector('.mobile-overlay'); if (mobileOverlay) mobileOverlay.style.display = 'none';
+        const maintenanceDiv = document.createElement('div');
+        maintenanceDiv.className = 'maintenance-message';
+        maintenanceDiv.innerHTML = '<h1>Сайт временно не работает</h1><p>Проводятся технические работы.</p><p>Пожалуйста, зайдите позже.</p>';
+        document.body.appendChild(maintenanceDiv);
+    }
+    
     async function init() {
-        try {
-            if (initialized) return;
-            initialized = true;
-            
-            document.getElementById('globalLoading').style.display = 'flex';
-            
-            await loadSettings();
-            
-            const [usersRes, postsRes, subsRes] = await Promise.all([
-                supabase.from('users').select('*'),
-                supabase.from('posts').select('*').order('timestamp', { ascending: false }).limit(100),
-                supabase.from('subscriptions').select('*')
-            ]);
-            
-            users = usersRes.data || [];
-            posts = (postsRes.data || []).filter(p => !p.deleted);
-            
-            if (subsRes.data) { 
-                subscriptions = {}; 
-                subsRes.data.forEach(item => { subscriptions[item.userId] = item.following || []; }); 
-            }
-            
-            if (maintenanceMode) {
-                const saved = localStorage.getItem('rb_session');
-                let isAdminUser = false;
-                
-                if (saved) {
-                    try {
-                        const sessionData = JSON.parse(saved);
-                        const u = users.find(user => user.id === sessionData.userId);
-                        if (u && u.isAdmin) {
-                            const isValid = await isSessionValid(sessionData.userId, sessionData.sessionId);
-                            if (isValid) {
-                                isAdminUser = true;
-                                currentUserId = sessionData.userId;
-                                currentSessionId = sessionData.sessionId;
-                            }
-                        }
-                    } catch (e) {}
-                }
-                
-                if (!isAdminUser) {
-                    showMaintenanceScreen();
-                    return;
-                }
-            }
-            
-            const existingAdmin = users.find(u => u.id === ADMIN_ID);
-            
-            if (!existingAdmin) {
-                const h = await hashPassword(ADMIN_PASSWORD);
-                const admin = { 
-                    id: ADMIN_ID, 
-                    login: ADMIN_LOGIN, 
-                    password: h, 
-                    name: "RetroBook", 
-                    isAdmin: true, 
-                    verified: true, 
-                    avatar: "", 
-                    banned: false 
-                };
-                await supabase.from('users').upsert(admin);
-                users.push(admin);
-            }
-            
+        if (initialized) return;
+        initialized = true;
+        document.getElementById('globalLoading').style.display = 'flex';
+        await loadSettings();
+        
+        const [usersRes, postsRes, subsRes] = await Promise.all([
+            supabase.from('users').select('*'),
+            supabase.from('posts').select('*').order('timestamp', { ascending: false }).limit(100),
+            supabase.from('subscriptions').select('*')
+        ]);
+        
+        users = usersRes.data || [];
+        posts = (postsRes.data || []).filter(p => !p.deleted);
+        if (subsRes.data) {
+            subscriptions = {};
+            subsRes.data.forEach(item => { subscriptions[item.userId] = item.following || []; });
+        }
+        
+        if (maintenanceMode) {
             const saved = localStorage.getItem('rb_session');
-            if (saved && !currentUserId) {
+            let isAdminUser = false;
+            if (saved) {
                 try {
                     const sessionData = JSON.parse(saved);
-                    const isValid = await isSessionValid(sessionData.userId, sessionData.sessionId);
-                    
-                    if (isValid) {
-                        const user = users.find(u => u.id === sessionData.userId && !u.banned);
-                        if (user) {
-                            currentUserId = sessionData.userId;
-                            currentSessionId = sessionData.sessionId;
-                        } else {
-                            localStorage.removeItem('rb_session');
-                        }
+                    if (sessionData.fingerprint === SECURITY.getFingerprint() && (Date.now() - sessionData.timestamp) < SECURITY.SESSION_TIMEOUT) {
+                        const u = users.find(user => user.id === sessionData.userId);
+                        if (u && u.isAdmin) isAdminUser = true;
                     } else {
                         localStorage.removeItem('rb_session');
                     }
@@ -1370,130 +1335,148 @@
                     localStorage.removeItem('rb_session');
                 }
             }
-            
-            window.addEventListener('hashchange', parseHash);
-            
-            document.querySelectorAll('.format-btn').forEach(btn => btn.addEventListener('click', () => {
-                const ta = document.getElementById('postText'); 
-                ta.value = formatText(ta.value, btn.dataset.format); 
-                ta.focus();
-            }));
-            
-            const postText = document.getElementById('postText');
-            if (postText) {
-                postText.addEventListener('input', function() {
-                    document.getElementById('charCounter').textContent = this.value.length + ' / 1500';
-                });
+            if (!isAdminUser) {
+                showMaintenanceScreen();
+                return;
             }
-            
-            const publishBtn = document.getElementById('publishBtn');
-            if (publishBtn) publishBtn.addEventListener('click', publishPost);
-            
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => {
+        }
+        
+        const existingAdmin = users.find(u => u.id === ADMIN_ID);
+        if (!existingAdmin) {
+            const h = await hashPassword(ADMIN_PASSWORD);
+            const admin = {
+                id: ADMIN_ID,
+                login: ADMIN_LOGIN,
+                password: h,
+                name: "RetroBook",
+                isAdmin: true,
+                verified: true,
+                avatar: "",
+                banned: false
+            };
+            await supabase.from('users').upsert(admin);
+            users.push(admin);
+        }
+        
+        const saved = localStorage.getItem('rb_session');
+        if (saved) {
+            try {
+                const sessionData = JSON.parse(saved);
+                if (sessionData.fingerprint === SECURITY.getFingerprint() && (Date.now() - sessionData.timestamp) < SECURITY.SESSION_TIMEOUT) {
+                    const user = users.find(u => u.id === sessionData.userId && !u.banned);
+                    if (user) currentUserId = sessionData.userId;
+                    else localStorage.removeItem('rb_session');
+                } else {
+                    localStorage.removeItem('rb_session');
+                }
+            } catch (e) {
+                localStorage.removeItem('rb_session');
+            }
+        }
+        
+        setupGlobalDelegation();
+        window.addEventListener('hashchange', parseHash);
+        
+        document.querySelectorAll('.format-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const ta = document.getElementById('postText');
+                ta.value = formatText(ta.value, btn.dataset.format);
+                ta.focus();
+            });
+        });
+        
+        document.getElementById('postText').addEventListener('input', function() {
+            document.getElementById('charCounter').textContent = this.value.length + ' / ' + SECURITY.MAX_POST_LENGTH;
+        });
+        
+        document.getElementById('publishBtn').addEventListener('click', publishPost);
+        
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
                 currentTab = btn.dataset.tab;
                 viewingUserId = null;
                 window.location.hash = currentTab === 'feed' ? '' : currentTab;
                 render();
-            }));
-            
-            document.querySelectorAll('.feed-tab-btn').forEach(btn => btn.addEventListener('click', () => {
+            });
+        });
+        
+        document.querySelectorAll('.feed-tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
                 document.querySelectorAll('.feed-tab-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active'); 
-                currentFeedMode = btn.dataset.feed; 
-                displayedPostsCount = POSTS_PER_PAGE; 
+                btn.classList.add('active');
+                currentFeedMode = btn.dataset.feed;
+                displayedPostsCount = POSTS_PER_PAGE;
                 renderFeed();
-            }));
-            
-            const burgerBtn = document.getElementById('burgerBtn');
-            if (burgerBtn) {
-                burgerBtn.addEventListener('click', () => {
-                    document.getElementById('mobileSidebar').classList.add('open'); 
-                    document.getElementById('mobileOverlay').classList.add('open');
-                });
-            }
-            
-            const closeMobile = document.getElementById('closeMobile');
-            if (closeMobile) {
-                closeMobile.addEventListener('click', () => {
-                    document.getElementById('mobileSidebar').classList.remove('open'); 
-                    document.getElementById('mobileOverlay').classList.remove('open');
-                });
-            }
-            
-            const mobileOverlay = document.getElementById('mobileOverlay');
-            if (mobileOverlay) {
-                mobileOverlay.addEventListener('click', () => {
-                    document.getElementById('mobileSidebar').classList.remove('open'); 
-                    document.getElementById('mobileOverlay').classList.remove('open');
-                });
-            }
-            
-            document.querySelectorAll('.mobile-tab-btn').forEach(btn => btn.addEventListener('click', () => {
+            });
+        });
+        
+        document.getElementById('burgerBtn').addEventListener('click', () => {
+            document.getElementById('mobileSidebar').classList.add('open');
+            document.getElementById('mobileOverlay').classList.add('open');
+        });
+        
+        document.getElementById('closeMobile').addEventListener('click', () => {
+            document.getElementById('mobileSidebar').classList.remove('open');
+            document.getElementById('mobileOverlay').classList.remove('open');
+        });
+        
+        document.getElementById('mobileOverlay').addEventListener('click', () => {
+            document.getElementById('mobileSidebar').classList.remove('open');
+            document.getElementById('mobileOverlay').classList.remove('open');
+        });
+        
+        document.querySelectorAll('.mobile-tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
                 currentTab = btn.dataset.tab;
                 viewingUserId = null;
                 window.location.hash = currentTab === 'feed' ? '' : currentTab;
-                document.getElementById('mobileSidebar').classList.remove('open'); 
+                document.getElementById('mobileSidebar').classList.remove('open');
                 document.getElementById('mobileOverlay').classList.remove('open');
                 render();
-            }));
-            
-            const postImage = document.getElementById('postImage');
-            if (postImage) {
-                postImage.addEventListener('change', (e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                        if (file.size > 5 * 1024 * 1024) {
-                            showMessage("Файл слишком большой (макс. 5 МБ)", 'error');
-                            e.target.value = '';
-                            return;
-                        }
-                        selectedPhoto = file;
-                        const preview = document.getElementById('photoPreview');
-                        preview.textContent = '';
-                        const btn = document.createElement('button');
-                        btn.className = 'remove-file-btn';
-                        btn.textContent = 'Удалить';
-                        btn.onclick = window.clearPhoto;
-                        preview.appendChild(document.createTextNode('Файл выбран '));
-                        preview.appendChild(btn);
-                    }
-                });
+            });
+        });
+        
+        document.getElementById('postImage').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                if (file.size > SECURITY.MAX_FILE_SIZE_PHOTO) { showMessage("Файл слишком большой", 'error'); e.target.value = ''; return; }
+                if (!SECURITY.ALLOWED_IMAGE_TYPES.includes(file.type)) { showMessage("Неподдерживаемый формат", 'error'); e.target.value = ''; return; }
+                if (!await validateFileMagicBytes(file, 'image')) { showMessage("Файл поврежден или имеет неверный формат", 'error'); e.target.value = ''; return; }
+                selectedPhoto = file;
+                const preview = document.getElementById('photoPreview');
+                preview.textContent = '';
+                const btn = document.createElement('button');
+                btn.className = 'remove-file-btn';
+                btn.textContent = 'Удалить';
+                btn.onclick = window.clearPhoto;
+                preview.appendChild(document.createTextNode('Файл выбран '));
+                preview.appendChild(btn);
             }
-            
-            const postAudio = document.getElementById('postAudio');
-            if (postAudio) {
-                postAudio.addEventListener('change', (e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                        if (file.size > 10 * 1024 * 1024) {
-                            showMessage("Файл слишком большой (макс. 10 МБ)", 'error');
-                            e.target.value = '';
-                            return;
-                        }
-                        selectedAudio = file;
-                        const preview = document.getElementById('audioPreview');
-                        preview.textContent = '';
-                        const btn = document.createElement('button');
-                        btn.className = 'remove-file-btn';
-                        btn.textContent = 'Удалить';
-                        btn.onclick = window.clearAudio;
-                        preview.appendChild(document.createTextNode('Файл выбран '));
-                        preview.appendChild(btn);
-                    }
-                });
+        });
+        
+        document.getElementById('postAudio').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                if (file.size > SECURITY.MAX_FILE_SIZE_AUDIO) { showMessage("Файл слишком большой", 'error'); e.target.value = ''; return; }
+                if (!SECURITY.ALLOWED_AUDIO_TYPES.includes(file.type)) { showMessage("Неподдерживаемый формат", 'error'); e.target.value = ''; return; }
+                if (!await validateFileMagicBytes(file, 'audio')) { showMessage("Аудиофайл поврежден или имеет неверный формат", 'error'); e.target.value = ''; return; }
+                selectedAudio = file;
+                const preview = document.getElementById('audioPreview');
+                preview.textContent = '';
+                const btn = document.createElement('button');
+                btn.className = 'remove-file-btn';
+                btn.textContent = 'Удалить';
+                btn.onclick = window.clearAudio;
+                preview.appendChild(document.createTextNode('Файл выбран '));
+                preview.appendChild(btn);
             }
-            
-            setTimeout(() => parseHash(), 10);
-            
-        } catch (error) {
-            console.error('Init error:', error);
-            const loading = document.getElementById('globalLoading');
-            if (loading) loading.style.display = 'none';
-            const feedContainer = document.getElementById('feedContainer');
-            if (feedContainer) feedContainer.innerHTML = '<div style="background:white;padding:20px;text-align:center;color:#dd3b3b;">Ошибка загрузки. Обновите страницу.</div>';
-        }
+        });
+        
+        document.getElementById('mainLogoBtn').addEventListener('click', window.goToMain);
+        
+        setTimeout(() => parseHash(), 10);
     }
-
+    
     init();
 </script>
 </body>
